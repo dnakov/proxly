@@ -1,0 +1,24 @@
+{
+  "name": "redirector",
+  "version": "0.0.0",
+  "description": "",
+  "main": "main.js",
+
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^3.46.0"
+  },
+  "devDependencies": {
+    "watchify": "^0.8.3"
+  },
+"scripts": {
+    "build-app": "browserify -t coffeeify app/src/background.coffee -d > app/src/bundles/background.bundle.js & browserify -t coffeeify -d app/src/index.coffee > app/src/bundles/index.bundle.js",
+    "build-extension": "browserify -t coffeeify extension/src/background.coffee -d > extension/src/bundles/background.bundle.js & browserify -t coffeeify -d extension/src/content.coffee > extension/src/bundles/content.bundle.js",
+    "build": "npm run build-app && npm run build-extension",
+    "watch-app": "watchify -t coffeeify app/src/background.coffee -o app/src/bundles/background.bundle.js -dv & watchify -t coffeeify app/src/index.coffee -o app/src/bundles/index.bundle.js -dv",
+    "watch-extension": "watchify -t coffeeify extension/src/background.coffee -o extension/src/bundles/background.bundle.js -dv & watchify -t coffeeify extension/src/content.coffee -o extension/src/bundles/content.bundle.js -dv",
+    "watch": "npm run watch-app & npm run watch-extension",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

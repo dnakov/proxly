@@ -1,0 +1,60 @@
+{
+    "name": "devtools",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "description": "__MSG_appDescription__",
+    "icons": {
+        "16": "images/redir-on-16.png",
+        "128": "images/redir-on.png"
+    },
+
+    "options_page":"options.html",
+    "devtools_page":"panel.html",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*/*",
+                "http://*/*"
+            ],
+            "js": [
+                "bundles/content.bundle.js"
+            ],
+            "run_at": "document_start",
+            "all_frames": false
+        }
+    ],
+    "web_accessible_resources": [
+        "redirector"
+    ],
+    "browser_action": {
+        "default_icon": {
+            "19": "images/redir-off-19.png",
+            "38": "images/redir-off-38.png"
+        },
+        "default_title": "redirector"
+    },
+    "background": {
+        "scripts": [
+            "bundles/background.bundle.js"
+        ]
+    },
+
+       "permissions": [
+       "management",
+       "experimental",
+       "activeTab",
+        "storage", "background",
+        "notifications", {"fileSystem": ["write", "retainEntries", "directory"]},
+        {"mediaGalleries": ["read"]},
+        "webRequest",
+        "webRequestBlocking",
+        "declarativeWebRequest",
+        "\u003Call_urls\u003E",
+        "file://*",
+        "file:///*",
+        "file:///Users/daniel/Dropbox/dev/MavensMate/3demo/resource-bundles/myNewAppDEV.resource/*",
+        "chrome-extension://*",
+        "management"
+    ]
+
+}
