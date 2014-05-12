@@ -1,1 +1,65 @@
-/* Will be compiled down to a single stylesheet with your sass files */
+.ui-match {
+        background: #00BC8C;
+    }
+    html {
+        width:100%;
+        height:100%;
+        overflow:hidden;
+    }
+
+    body {
+        padding:70px;
+        height:100%;
+        overflow:scroll;
+    }
+    .dl-horizontal dd {
+        margin-left: 55px;
+        /*padding-left:5px;*/
+    }
+    .dl-horizontal dt {
+        width:50px;
+        text-align: right;
+    }
+    .iconic-cogs {
+        fill:orange;
+        stroke:orange;
+    }
+    .file-icon > .iconic {
+        margin-top:18px;
+    }
+
+    .resource-list, .file-icon {
+        padding-left:0px;
+        margin-bottom:10px;
+    }
+    .resource-list dt {
+        color:#00BC8C;
+
+    }
+/*    .iconic-cogs-cog-large {
+        -webkit-transform-origin: 50% 50% 0;
+        -webkit-animation: rotateCog 5s infinite linear;
+    }
+    .iconic-cogs-cog-large .off {
+        -webkit-animation-name: none;
+    }
+    .iconic-cogs-cog-small .off {
+        -webkit-animation-name: none;
+    }
+
+    @-webkit-keyframes rotateCog {
+    100% {
+        -wekbit-transform: rotate(360deg);
+    }
+}
+    .iconic-cogs-cog-small {
+        -wekbit-transform-origin: 50% 50% 0;
+        -wekbit-transform: rotate(0deg);
+        -webkit-animation: rotateSmallCog 5s infinite linear;
+    }
+
+    @-webkit-keyframes rotateSmallCog {
+    100% {
+        -webkit-transform: rotate(-360deg);
+    }*/
+}

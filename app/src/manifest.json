@@ -1,5 +1,6 @@
 {
   "name": "Redirector App",
+
   "version": "0.0.1",
   "manifest_version": 2,
   "description": "__MSG_appDescription__",
@@ -7,19 +8,27 @@
     "16": "icon-16.png",
     "128": "icon-128.png"
   },
+
   "app": {
     "background": {
       "scripts": ["bundles/background.bundle.js"]
     }
   },
-  "web_accessible_resources": ["styles/livereload.js", "styles/bootstrap.min.js","styles/jquery.min.js", "styles/bootstrap.min.css", "styles/main.css"],
+  "web_accessible_resources": ["styles/iconic.min.js","styles/file.svg", "styles/livereload.js", "styles/bootstrap.min.js","styles/jquery.min.js", "styles/bootstrap.min.css", "styles/main.css"],
   "permissions": [
+  {"socket":[
+            "tcp-connect",
+            "udp-bind::",
+            "tcp-listen::",
+            "udp-send-to::"
+        ]},
+  "experimental",
   "management",
-    {"socket":["tcp-connect", "tcp-listen"]},
-            "\u003Call_urls\u003E",
+
+"webview", "<all_urls>",
         "file://*",
         "file:///*",
-        "chrome-extension://*",{"fileSystem": ["retainEntries", "directory"]}, "background",
+        "chrome-extension://*",{"fileSystem": ["write", "retainEntries", "directory"]}, "background",
         "storage"
   ]
 }

@@ -21,13 +21,13 @@
   To monitor CSS and be notified that it has loaded, include it as: live.js#css,notify
 */
 (function () {
-  if(jQuery){
-    jQuery(function($){
-      $('body').prepend('<div style="background: red; color: #fff; position: fixed; z-index: 1000; width: 100%; padding: 10px; top: 0; opacity: 0.25">Developing with live.js</div>');
-    });
-  } else {
-      document.body.insertAdjacentHTML('afterbegin', '<div style="background: red; color: #fff; position: fixed; z-index: 1000; top: 0; width: 100%; padding: 10px; opacity: 0.25">Developing with live.js</div>');
-  }
+  // if(jQuery){
+  //   jQuery(function($){
+  //     $('body').prepend('<div style="background: red; color: #fff; position: fixed; z-index: 1000; width: 100%; padding: 10px; top: 0; opacity: 0.25">Developing with live.js</div>');
+  //   });
+  // } else {
+  //     document.body.insertAdjacentHTML('afterbegin', '<div style="background: red; color: #fff; position: fixed; z-index: 1000; top: 0; width: 100%; padding: 10px; opacity: 0.25">Developing with live.js</div>');
+  // }
 
   var headers = { "Etag": 1, "Last-Modified": 1, "Content-Length": 1, "Content-Type": 1 },
       resources = {},

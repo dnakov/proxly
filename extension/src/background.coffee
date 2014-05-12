@@ -8,6 +8,7 @@
 
 # root.app = app = require '../../common.coffee'
 # app = new lib.Application
+
 Application = require '../../common.coffee'
 
 class ExtBackground extends Application
@@ -17,24 +18,94 @@ class ExtBackground extends Application
     isOn: {}
     files: {}
     extPort: {}
+    currentTabId:null
+    maps: []
 
     init: () ->
         chrome.tabs.onUpdated.addListener (tabId) =>
-            @updateIcon(tabId) if @isOn[tabId]?
+            @currentTabId = tabId
+            @updateIcon(tabId) if not @isOn[tabId]?
 
         @LISTEN.Local 'resources', (resources) =>
-            debugger;
-            @launchApp()
-            @MSG.Ext 'resources':resources
+            undefined
+
+        @LISTEN.Ext 'redirInfo', (red) =>
+            @maps=red.maps
+            @server=red.server
 
         chrome.browserAction.onClicked.addListener (tab) =>
-            if @isOn[tab.id]
+            if not @isOn[tab.id]
                 @isOn[tab.id] = true
-                chrome.tabs.sendMessage tab.id, 'getResources':true
+                chrome.tabs.sendMessage tab.id, 'getResources':true, (response) =>
+                    @launchApp()
+                    @MSG.Ext 'resources':response.resources
+                    # @initRedirects()
             else
-                @isOn[tab.id] = if @isOn[tab.id]? then true else !@isOn[tab.id]
+                @isOn[tab.id] = if not @isOn[tab.id]? then true else !@isOn[tab.id]
+                @killRedirects()
 
             @updateIcon tab.id
+
+    getServer: () ->
+
+    killRedirects: () ->
+        chrome.webRequest.onBeforeRequest.removeListener()
+
+    initRedirects: () =>
+        return if @maps.length is 0
+        chrome.webRequest.onBeforeRequest.addListener @redirectListener,
+            urls:['<all_urls>']
+            tabId:@currentTabId,
+            ['blocking']
+
+        # chrome.webRequest.onBeforeSendHeaders.addListener @headerListener,
+        #     urls:['<all_urls>']
+        #     tabId:@currentTabId,
+        #     ['requestHeaders']
+
+        # chrome.webRequest.onHeadersReceived.addListener ((details) => @redirectListener(details)),
+        #     urls:['<all_urls>']
+        #     tabId:@currentTabId,
+        #     ['blocking','responseHeaders']
+
+
+    match: (url) ->
+        return map for map in @maps when url.match(map.url)? and map.url?
+        return null
+
+    headerListener: (details) ->
+        show details
+
+    redirectListener: (details) =>
+        show details
+        map = @match details.url
+        if map?
+            show 'redirected to ' + @server.url + encodeURIComponent(details.url)
+            return redirectUrl: @server.url + encodeURIComponent(details.url) #details.url.replace(new RegExp(map.url), map.regexRepl)
+        else
+            return {}
+   # {
+#                     urls: [key],
+#                     tabId: tabId
+#                 },
+#                 ["blocking"]
+        # chrome.webRequest.onBeforeSendHeaders.addListener(
+        #         (function(_key, _type) {
+        #             if(urls[_key]._listenerFunctions == undefined) urls[_key]._listenerFunctions = {};
+        #             urls[_key]._listenerFunctions[_type] = (function(key) {
+        #                 return function(details) {
+        #                     return headerRequestListener(details, key);
+        #                 };
+        #             }(key));
+        #             return urls[_key]._listenerFunctions[_type];
+        #         }(key, 'onBeforeSendHeaders')),
+        #         {
+        #             urls: ["<all_urls>"],
+        #             tabId: tabId
+        #         },
+        #         ["requestHeaders"]
+        #     );
+
 
     updateIcon: (tabId) =>
         if @isOn[tabId]

@@ -4,75 +4,80 @@
   <head>
     <title>Redirector</title>
     <meta name="viewport" content="width=device-width">
-    <link rel="stylesheet" href="styles/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/bootstrap.css">
+    <link rel="stylesheet" href="styles/main.css">
     <script type="text/javascript" src="styles/jquery.min.js"></script>
     <script type="text/javascript" src="styles/bootstrap.min.js"></script>
+
   </head>
 
-  <body ng-controller="MainCtrl" class="container">
-  <style>
-    .ui-match {
-        background: yellow;
-    }
-  </style>
-    <div class="container">
-      <div class="navbar navbar-default">
+  <body ng-controller="MainCtrl">
+
+    <div class="container-fluid">
+      <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container">
           <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
               <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
             </button>
-            <a href="#" class="navbar-brand">Redirect this shit</a>
+            <a ng-click="server.status = server.status == 'on' ? 'off' : 'on'" style="padding:0;padding-top:5px;" href="#" class="navbar-brand">
+
+            </a>
+
           </div>
           <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav"></ul>
             <form class="navbar-form navbar-left">
               <div class="form-group"></div>
             </form>
-            <div class="pull-right btn-group">
-              <button class="btn pull-left btn-default">Left</button>
-              <button class="btn btn-default">Middle</button>
-              <button class="btn btn-default">Save</button>
+            <div class="pull-right">
+              <button class="btn btn-default" ng-click="save()">Save</button>
             </div>
           </div>
         </div>
-      </div>
+      </nav>
+
       <div class="row">
+
+      <!-- <span class="iconic iconic-md iconic-cogs" title="gear" aria-hidden="true"></span> -->
         <div class="col-xs-6">
-          <button class="btn btn-success" ng-click="newMapping()">New</button>
+          <button class="btn btn-xs btn-success" ng-click="newMapping()">New</button>
         </div>
         <div class="col-xs-6">
-          <a class="btn pull-right btn-danger" ng-click="deleteMapping(item)">Delete</a>
+          <a class="btn btn-xs pull-right btn-danger" ng-click="deleteMapping(item)">Delete</a>
         </div>
       </div>
-      <div class="well" ng-repeat="item in maps">
+          <div class="panel panel-default" ng-repeat="item in maps">
+            <div class="panel-content">
+              <h4>{{item.directory}}
+              <button class="btn btn-sm btn-info" ng-click="openDirectory(item)">{{item.directory == null ? 'Add' : 'Change'}}</button></h4>
+            </div>
+        <div class="panel-footer">
         <div class="row">
           <div class="col-xs-6">
-            <span class="label label-default">URL Pattern</span><input ng-model="item.url" type="text" class="form-control">
+            <span class="label label-default">Match</span><input ng-model="item.url" type="text" class="form-control">
           </div>
           <div class="col-xs-6">
-            <span class="label label-default" ng-click="openDirectory(item)">Directory</span><input ng-model="item.directory" type="text" class="form-control">
+            <span class="label label-default">Replace With</span><input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control">
           </div>
-        </div><br>
-        <div class="row">
-          <div class="col-xs-12">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>URL</th>
-                  <th>Local File</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="res in currentResources" -->
-                  <td>{{res.tagName}}</td>
-                  <td><p ng-bind-html="getHtmlSafe(res.url) | highlight:item.url:caseSensitive"></p></td>
-                  <td>{{res.localPath}}</td>
-                </tr>
-              </tbody>
-            </table>
           </div>
+        <br>
+        <div class="row"  ng-repeat="res in filteredResources = (currentResources | regex:'url':item.url)">
+
+          <div class="col-xs-1"><img class="iconic iconic-md" src="images/file-{{res.extension}}-md.svg"></div>
+          <div class="col-xs-11 resource-list">
+
+                <dl class="dl-horizontal">
+                <div></div>
+                <!-- <dd/> -->
+                  <dt>URL</dt>
+                  <dd><p ng-bind-html="res.url | highlight:item.url:caseSensitive">{{res.url}}</p></dd>
+                  <dt>Local</dt>
+                  <dd><p>{{res.localPath}}</p></dd>
+                </dl>
+          </div>
+        </div>
+
         </div>
       </div>
     </div>

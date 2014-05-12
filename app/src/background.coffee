@@ -11,14 +11,84 @@
 Application = require '../../common.coffee'
 #app = new lib.Application
 class AppBackground extends Application
+    retainedDirs:{}
     init: () ->
+        @Storage.retrieveAll () =>
+            @data = @Storage.data
+            @maps = @data.maps
+
+        @Server.getLocalFile = @getLocalFile
         @Storage.onChanged 'resourceMap', (obj) =>
             @MSG.Ext obj
 
         @LISTEN.Ext 'resources', (result) =>
             @Storage.save 'currentResources', result
 
-        chrome.app.runtime.onLaunched @openApp()
+        @LISTEN.Local 'startServer', (results) =>
+            @Server.start results.host, results.port
+
+        @LISTEN.Local 'stopServer', () =>
+            @Server.stop()
+
+        @startServer()
+        try
+            chrome.app.runtime.onLaunched.addListener @openApp
+            chrome.app.runtime.onRestarted.addListener @cleanUp
+        catch error
+            show error
+
+
+    cleanUp: () ->
+        @stopServer()
+
+    getLocalFile: (info, cb, error) =>
+
+        @findFileForQueryString info.url, success,
+            (error) =>
+                @findFileForPath info, cb, error
+
+    findFileForPath: (info, cb, error) =>
+        @findFileForQueryString info.url, cb, error, info.referer
+
+    findFileForQueryString: (_url, cb, error, referer) =>
+        url = _url.replace /.*?slredir\=/, ''
+
+        match = item for item in @maps when url.match(new RegExp(item.url), item.regexRepl)? and item.url? and not match?
+
+        if match?
+            if referer?
+                filePath = url.match(/.*\/\/.*?\/(.*)/)?[1]
+            else
+                filePath = url.replace new RegExp(match.url), match.regexRepl
+            dir = @Storage.data.directories[match.directory]
+
+            if not dir? then return err 'no match'
+
+            if @retainedDirs[dir.directoryEntryId]?
+                dirEntry = @retainedDirs[dir.directoryEntryId]
+                @FS.readFile dirEntry, filePath,
+                    (fileEntry, file) =>
+                        cb?(fileEntry, file)
+                    ,(error) => error()
+            else
+                chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+                    @retainedDirs[dir.directoryEntryId] = dirEntry
+                    @FS.readFile dirEntry, filePath,
+                        (fileEntry, file) =>
+                            cb?(fileEntry, file)
+                        ,(error) => error()
+                    ,(error) => error()
+        else
+            error()
+
+
+    startServer: () ->
+        @Server.start null,null,null, () =>
+            @MSG.Local 'server':@Server
+
+    stopServer: () ->
+        @Server.stop
+        @MSG.Local 'server':null
 
 app = new AppBackground
 
@@ -47,10 +117,10 @@ app = new AppBackground
 
           if (request.directoryEntryId) {
             // sendResponse({"result":"Got Directory"});
-            console.log(request.directoryEntryId);
+            show(request.directoryEntryId);
             directories.push(request.directoryEntryId);
             // chrome.fileSystem.restoreEntry(request.directoryEntryId, function(directoryEntry) {
-            //     console.log(directoryEntry);
+            //     show(directoryEntry);
             // });
 
           } else {
@@ -73,7 +143,7 @@ app = new AppBackground
     socket.create("tcp", {}, function(_socketInfo) {
         socketInfo = _socketInfo;
         socket.listen(socketInfo.socketId, "127.0.0.1", 33333, 50, function(result) {
-        console.log("LISTENING:", result);
+        show("LISTENING:", result);
         socket.accept(socketInfo.socketId, onAccept);
     });
     });
@@ -136,7 +206,7 @@ onload = function() {
     view.set(header, 0);
     console.info("writeErrorResponse:: Done setting view...");
     socket.write(socketId, outputBuffer, function(writeInfo) {
-      console.log("WRITE", writeInfo);
+      show("WRITE", writeInfo);
       if (keepAlive) {
         readFromSocket(socketId);
       } else {
@@ -161,7 +231,7 @@ onload = function() {
     fileReader.onload = function(e) {
        view.set(new Uint8Array(e.target.result), header.byteLength);
        socket.write(socketId, outputBuffer, function(writeInfo) {
-         console.log("WRITE", writeInfo);
+         show("WRITE", writeInfo);
          if (keepAlive) {
            readFromSocket(socketId);
          } else {
@@ -175,14 +245,14 @@ onload = function() {
   };
 
   var onAccept = function(acceptInfo) {
-    console.log("ACCEPT", acceptInfo)
+    show("ACCEPT", acceptInfo)
     readFromSocket(acceptInfo.socketId);
   };
 
   var readFromSocket = function(socketId) {
     //  Read in the data
     socket.read(socketId, function(readInfo) {
-      console.log("READ", readInfo);
+      show("READ", readInfo);
       // Parse the request.
       var data = arrayBufferToString(readInfo.data);
       if(data.indexOf("GET ") == 0) {
@@ -205,14 +275,14 @@ onload = function() {
         .then(
             (function(url) {
                 return function(directoryEntry) {
-                    console.log(directoryEntry);
-                    console.log(uri);
+                    show(directoryEntry);
+                    show(uri);
                     directoryEntry.getFile('myNewAppDEV.resource/index.js', {})
                     .then(function(file) {
-                        console.log(file);
+                        show(file);
                         write200Response(socketId, file, keepAlive);
                     },function(e) {
-                        console.log(e);
+                        show(e);
                     });
 
                 }
@@ -262,10 +332,10 @@ onload = function() {
 
           if (request.directoryEntryId) {
             // sendResponse({"result":"Got Directory"});
-            console.log(request.directoryEntryId);
+            show(request.directoryEntryId);
             directories.push(request.directoryEntryId);
             // chrome.fileSystem.restoreEntry(request.directoryEntryId, function(directoryEntry) {
-            //     console.log(directoryEntry);
+            //     show(directoryEntry);
             // });
 
           } else {
@@ -275,7 +345,7 @@ onload = function() {
     socket.create("tcp", {}, function(_socketInfo) {
         socketInfo = _socketInfo;
         socket.listen(socketInfo.socketId, "127.0.0.1", 33333, 50, function(result) {
-        console.log("LISTENING:", result);
+        show("LISTENING:", result);
         socket.accept(socketInfo.socketId, onAccept);
     });
     });

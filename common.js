@@ -1,8 +1,6 @@
 (function() {
-  var Application, FileSystem, LISTEN, Mapping, ResourceList, Storage,
+  var Application, Data, FileSystem, LISTEN, MSG, Mapping, Storage, Util,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-
-  require('./chrome-mock');
 
   Array.prototype.where = function(query) {
     var hit;
@@ -29,110 +27,182 @@
 
   Array.prototype.toDict = function(key) {
     return this.reduce((function(dict, obj) {
-      if (obj[key] != null) {
+      if (obj[kewy] != null) {
         dict[obj[key]] = obj;
       }
       return dict;
     }), {});
   };
 
+  MSG = (function() {
+    function MSG(config) {
+      this.config = config;
+    }
+
+    MSG.prototype.Local = function(message) {
+      console.log("== MESSAGE ==> " + message);
+      return chrome.runtime.sendMessage(message);
+    };
+
+    MSG.prototype.Ext = function(message) {
+      console.log("== MESSAGE " + this.config.EXT_TYPE + " ==> " + message);
+      return chrome.runtime.sendMessage(this.config.EXT_ID, message);
+    };
+
+    return MSG;
+
+  })();
+
   LISTEN = (function() {
-    var Listener, external, local;
-
-    function LISTEN() {}
-
-    local = null;
-
-    external = null;
-
-    LISTEN.Local = function(message, callback) {
-      return (local != null ? local : local = new Listener(false)).addListener(message, callback);
+    LISTEN.prototype.local = {
+      api: chrome.runtime.onMessage,
+      listeners: {}
     };
 
-    LISTEN.Ext = function(message, callback) {
-      return (external != null ? external : external = new Listener(true)).addListener(message, callback);
+    LISTEN.prototype.external = {
+      api: chrome.runtime.onMessageExternal,
+      listeners: {}
     };
 
-    Listener = (function() {
-      Listener.prototype.listeners = {};
-
-      Listener.prototype.external = false;
-
-      Listener.prototype.api = chrome.runtime.onMessage;
-
-      function Listener(external) {
-        this.onMessage = __bind(this.onMessage, this);
-        this.external = external;
-        this.api = this.external ? chrome.runtime.onMessageExternal : this.api;
-        this.api.addListener(this.onMessage);
+    function LISTEN(config) {
+      this._onMessage = __bind(this._onMessage, this);
+      this._onMessageExternal = __bind(this._onMessageExternal, this);
+      this.Ext = __bind(this.Ext, this);
+      this.Local = __bind(this.Local, this);
+      var _ref;
+      this.config = config;
+      this.local.api.addListener(this._onMessage);
+      if ((_ref = this.external.api) != null) {
+        _ref.addListener(this._onMessageExternal);
       }
+    }
 
-      Listener.prototype.addListener = function(message, callback) {
-        return this.listeners[message] = callback;
-      };
+    LISTEN.prototype.Local = function(message, callback) {
+      return this.local.listeners[message] = callback;
+    };
 
-      Listener.prototype.onMessage = function(request, sender, sendResponse) {
-        var key, _results;
-        if (this.external && sender.id !== EXT_ID) {
-          return void 0;
-        } else {
-          _results = [];
-          for (key in request) {
-            _results.push((function(_this) {
-              return function(key) {
-                if (_this.listeners[key] != null) {
-                  return _this.listeners[key](request.key);
-                }
-              };
-            })(this)(key));
-          }
-          return _results;
-        }
-      };
+    LISTEN.prototype.Ext = function(message, callback) {
+      return this.external.listeners[message] = callback;
+    };
 
-      return Listener;
+    LISTEN.prototype._onMessageExternal = function(request, sender, sendResponse) {
+      var key, _base, _results;
+      console.log(("<== EXTERNAL MESSAGE == " + this.config.EXT_TYPE + " ==") + request);
+      if (sender.id !== this.config.EXT_ID) {
+        return void 0;
+      }
+      _results = [];
+      for (key in request) {
+        _results.push(typeof (_base = this.external.listeners)[key] === "function" ? _base[key](request[key]) : void 0);
+      }
+      return _results;
+    };
 
-    })();
+    LISTEN.prototype._onMessage = function(request, sender, sendResponse) {
+      var key, _base, _results;
+      console.log(("<== MESSAGE == " + this.config.EXT_TYPE + " ==") + request);
+      _results = [];
+      for (key in request) {
+        _results.push(typeof (_base = this.local.listeners)[key] === "function" ? _base[key](request[key]) : void 0);
+      }
+      return _results;
+    };
 
     return LISTEN;
 
   })();
 
+  Data = (function() {
+    function Data() {}
+
+    Data.prototype.mapping = [
+      {
+        directory: null,
+        urlPattern: null
+      }
+    ];
+
+    Data.prototype.resources = [
+      {
+        resource: null,
+        file: null
+      }
+    ];
+
+    return Data;
+
+  })();
+
   Storage = (function() {
-    var api;
+    Storage.prototype.api = chrome.storage.local;
 
-    function Storage() {}
+    Storage.prototype.data = {};
 
-    api = chrome.storage.local;
+    Storage.prototype.callback = function() {};
 
-    Storage.save = function(key, item) {
+    function Storage(callback) {
+      this.callback = callback;
+      this.retrieveAll();
+      this.onChangedAll();
+    }
+
+    Storage.prototype.save = function(key, item) {
       var obj;
       obj = {};
       obj[key] = item;
-      return api.set(obj);
+      return this.api.set(obj);
     };
 
-    Storage.retrieve = function(key) {
-      var promise;
-      promise = new Promise(function(resolve, reject) {
-        api.get(key, function(results) {
-          return resolve(results);
-        });
-        return function(error) {
-          return reject(error);
-        };
-      });
-      return promise.then(function(results) {
-        return results;
-      });
+    Storage.prototype.saveAll = function() {
+      return this.api.set(this.data);
     };
 
-    Storage.onChanged = function(key, callback) {
-      return chrome.storage.onChanged.addListener(function(changes, namespace) {
-        if (changes[key] != null) {
-          return callback(changes[key].newValue);
+    Storage.prototype.retrieve = function(key, cb) {
+      return this.api.get(key, function(results) {
+        var r;
+        for (r in results) {
+          this.data[r] = results[r];
+        }
+        if (cb != null) {
+          return cb(results[key]);
         }
       });
+    };
+
+    Storage.prototype.retrieveAll = function(cb) {
+      return this.api.get((function(_this) {
+        return function(result) {
+          _this.data = result;
+          if (typeof _this.callback === "function") {
+            _this.callback(result);
+          }
+          if (typeof cb === "function") {
+            cb(result);
+          }
+          return console.log(result);
+        };
+      })(this));
+    };
+
+    Storage.prototype.onChanged = function(key, cb) {
+      return chrome.storage.onChanged.addListener(function(changes, namespace) {
+        if ((changes[key] != null) && (cb != null)) {
+          cb(changes[key].newValue);
+        }
+        return typeof this.callback === "function" ? this.callback(changes) : void 0;
+      });
+    };
+
+    Storage.prototype.onChangedAll = function() {
+      return chrome.storage.onChanged.addListener((function(_this) {
+        return function(changes, namespace) {
+          var c;
+          for (c in changes) {
+            _this.data[c] = changes[c].newValue;
+          }
+          return typeof _this.callback === "function" ? _this.callback(changes) : void 0;
+        };
+      })(this));
     };
 
     return Storage;
@@ -140,24 +210,58 @@
   })();
 
   FileSystem = (function() {
-    function FileSystem() {}
-
     FileSystem.prototype.api = chrome.fileSystem;
 
-    FileSystem.openDirectory = function(callback) {
-      return api.chooseEntry({
-        type: 'openDirectory'
-      }, function(directoryEntry, files) {
-        return api.getDisplayPath(directoryEntry, function(pathName) {
-          var dir;
-          dir = {
-            relPath: directoryEntry.fullPath.replace('/' + directoryEntry.name, ''),
-            directoryEntryId: api.retainEntry(directoryEntry),
-            entry: directoryEntry
-          };
-          return callback(pathName, dir);
-        });
+    function FileSystem() {
+      this.openDirectory = __bind(this.openDirectory, this);
+    }
+
+    FileSystem.prototype.fileToArrayBuffer = function(blob, callback, opt_errorCallback) {
+      var reader;
+      reader = new FileReader();
+      reader.onload = function(e) {
+        callback(e.target.result);
+      };
+      reader.onerror = function(e) {
+        if (opt_errorCallback) {
+          opt_errorCallback(e);
+        }
+      };
+      reader.readAsArrayBuffer(blob);
+    };
+
+    FileSystem.prototype.readFile = function(dirEntry, path, success, error) {
+      return getFileEntry(dirEntry, path, function(fileEntry) {
+        return fileEntry.file(function(file) {
+          return fileToArrayBuffer(file, function(arrayBuffer) {
+            return success(arrayBuffer, error);
+          }, error);
+        }, error);
       });
+    };
+
+    FileSystem.prototype.getFileEntry = function(dirEntry, path, success, error) {
+      return dirEntry.getFile(path, {}, function(fileEntry) {
+        return success(fileEntry);
+      });
+    };
+
+    FileSystem.prototype.openDirectory = function(callback) {
+      return this.api.chooseEntry({
+        type: 'openDirectory'
+      }, (function(_this) {
+        return function(directoryEntry, files) {
+          return _this.api.getDisplayPath(directoryEntry, function(pathName) {
+            var dir;
+            dir = {
+              relPath: directoryEntry.fullPath.replace('/' + directoryEntry.name, ''),
+              directoryEntryId: _this.api.retainEntry(directoryEntry),
+              entry: directoryEntry
+            };
+            return callback(pathName, dir);
+          });
+        };
+      })(this));
     };
 
     return FileSystem;
@@ -204,124 +308,146 @@
 
   })();
 
-  ResourceList = (function() {
-    ResourceList.prototype.selector = 'script[src],link[href]';
 
-    ResourceList.prototype.resources = [];
+  /*
+  class File
+      constructor: (directoryEntry, path) ->
+          @dirEntry = directoryEntry
+          @path = path
+  
+  class Server
+      constructor: () ->
+  
+      start: () ->
+          socket.create "tcp", {}, (_socketInfo) ->
+              @socketInfo = _socketInfo;
+              socket.listen socketInfo.socketId, "127.0.0.1", 31337, 50, (result) ->
+                  console.log "LISTENING:", result
+                  socket.accept @socketInfo.socketId, @_onAccept
+  
+      stop: () ->
+          socket.destroy @socketInfo.socketId
+  
+      _onAccept: (acceptInfo) ->
+          console.log("ACCEPT", acceptInfo)
+          info = @_readFromSocket acceptInfo.socketId
+          @getFile uri, (file) ->
+  
+      getFile: (uri) ->
+  
+      _write200Response: (socketId, file, keepAlive) ->
+        contentType = (if (file.type is "") then "text/plain" else file.type)
+        contentLength = file.size
+        header = stringToUint8Array("HTTP/1.0 200 OK\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
+        outputBuffer = new ArrayBuffer(header.byteLength + file.size)
+        view = new Uint8Array(outputBuffer)
+        view.set header, 0
+        fileReader = new FileReader()
+        fileReader.onload = (e) ->
+          view.set new Uint8Array(e.target.result), header.byteLength
+          socket.write socketId, outputBuffer, (writeInfo) ->
+            console.log "WRITE", writeInfo
+            if keepAlive
+              readFromSocket socketId
+            else
+              socket.destroy socketId
+              socket.accept socketInfo.socketId, onAccept
+            return
+  
+          return
+  
+        fileReader.readAsArrayBuffer file
+        return
+  
+      _readFromSocket: (socketId) ->
+          socket.read socketId, (readInfo) ->
+            console.log "READ", readInfo
+  
+             * Parse the request.
+            data = arrayBufferToString(readInfo.data)
+            if data.indexOf("GET ") is 0
+              keepAlive = false
+              keepAlive = true  unless data.indexOf("Connection: keep-alive") is -1
+  
+               * we can only deal with GET requests
+              uriEnd = data.indexOf(" ", 4)
+              return  if uriEnd < 0
+              uri = data.substring(4, uriEnd)
+  
+               * strip qyery string
+              q = uri.indexOf("?")
+              info =
+                  uri: (uri.substring(0, q) unless q is -1)
+                  keepAlive:keepAlive
+  
+          stringToUint8Array: (string) ->
+            buffer = new ArrayBuffer(string.length)
+            view = new Uint8Array(buffer)
+            i = 0
+  
+            while i < string.length
+              view[i] = string.charCodeAt(i)
+              i++
+            view
+  
+          arrayBufferToString: (buffer) ->
+            str = ""
+            uArrayVal = new Uint8Array(buffer)
+            s = 0
+  
+            while s < uArrayVal.length
+              str += String.fromCharCode(uArrayVal[s])
+              s++
+            str
+   */
 
-    function ResourceList(selector) {
-      this.selector = selector || this.selector;
-    }
+  Util = (function() {
+    function Util() {}
 
-    ResourceList.initFromStorage = function() {
-      var promise;
-      promise = new Promise(function(success, fail) {
-        return chrome.storage.local.get(function(a) {
-          var b, key, _fn;
-          b = new ResourceList;
-          _fn = function(a) {
-            return b[key] = a[key];
-          };
-          for (key in a) {
-            _fn(a);
-          }
-          return success(b);
-        });
-      });
-      return promise().then(function(b) {
-        return b;
-      });
-    };
-
-    ResourceList.prototype.getResources = function() {
-      return this.resources = [].map.call(document.querySelectorAll(this.selector), function(e) {
-        var _ref, _ref1;
-        return {
-          url: e.href != null ? e.href : e.src,
-          path: ((_ref = e.attributes['src']) != null ? _ref.value : void 0) != null ? e.attributes['src'].value : (_ref1 = e.attributes['href']) != null ? _ref1.value : void 0,
-          href: e.href,
-          src: e.src,
-          type: e.type,
-          tagName: e.tagName
-        };
-      }).filter(function(e) {
-        if (e.url.match('^(https?)|(chrome-extension)|(file):\/\/.*') != null) {
-          return true;
-        } else {
-          return false;
-        }
-      });
-    };
-
-    return ResourceList;
+    return Util;
 
   })();
 
   Application = (function() {
-    var APP_ID, EXTENSION_ID, EXT_ID, SELF_ID;
-
-    APP_ID = 'chpffdckkhhppmgclfbompfgkghpmgpg';
-
-    EXTENSION_ID = 'aajhphjjbcnnkgnhlblniaoejpcnjdpf';
-
-    SELF_ID = chrome.runtime.id;
-
-    EXT_ID = APP_ID === SELF_ID ? EXTENSION_ID : APP_ID;
-
-    Application.prototype.MSG = function(message, ext) {
-      return chrome.runtime.sendMessage(message, ext);
+    Application.prototype.config = {
+      APP_ID: 'chpffdckkhhppmgclfbompfgkghpmgpg',
+      EXTENSION_ID: 'aajhphjjbcnnkgnhlblniaoejpcnjdpf'
     };
 
-    Application.prototype.MSGEXT = function(message) {
-      return MSG(message, EXT_ID);
-    };
+    Application.prototype.data = null;
 
-    Application.prototype.data = {
-      directories: {}
-    };
+    Application.prototype.LISTEN = null;
 
-    Application.prototype.LISTEN = LISTEN;
+    Application.prototype.MSG = null;
 
-    Application.prototype.Storage = Storage;
+    Application.prototype.Storage = null;
 
-    Application.prototype.FS = FileSystem;
-
-    Application.prototype.Mapping = Mapping;
-
-    Application.prototype.ResourceList = ResourceList;
+    Application.prototype.FS = null;
 
     function Application() {
       this.setRedirect = __bind(this.setRedirect, this);
       this.openApp = __bind(this.openApp, this);
       this.startServer = __bind(this.startServer, this);
       this.init = __bind(this.init, this);
+      this.Storage = new Storage;
+      this.FS = new FileSystem;
+      this.config.SELF_ID = chrome.runtime.id;
+      this.config.EXT_ID = this.config.APP_ID === this.config.SELF_ID ? this.config.EXTENSION_ID : this.config.APP_ID;
+      this.config.EXT_TYPE = this.config.APP_ID !== this.config.SELF_ID ? 'EXTENSION' : 'APP';
+      this.MSG = new MSG(this.config);
+      this.LISTEN = new LISTEN(this.config);
       this.appWindow = null;
       this.port = 31337;
+      this.data = this.Storage.data;
       this.init();
     }
 
-    Application.prototype.init = function() {
-      Storage.onChanged('resourceMap', function(obj) {
-        return MSG_EXT(obj);
-      });
-      return LISTEN.Ext('resources', (function(_this) {
-        return function(result) {
-          Storage.save('resources', result);
-          return _this.openApp();
-        };
-      })(this));
-    };
+    Application.prototype.init = function() {};
 
-    Application.prototype.addMapping = function() {
-      return this.FS.openDirectory(function(pathName, dir) {
-        var match;
-        match = this.data.directories.where({
-          pathName: pathName
-        });
-        if (match.length > 0) {
+    Application.prototype.addMapping = function() {};
 
-        }
-      });
+    Application.prototype.launchApp = function(cb) {
+      return chrome.management.launchApp(this.config.APP_ID);
     };
 
     Application.prototype.startServer = function() {
@@ -347,11 +473,31 @@
       return void 0;
     };
 
+    Application.prototype.getResources = function(selector) {
+      return [].map.call(document.querySelectorAll(selector), function(e) {
+        var _ref, _ref1;
+        return {
+          url: e.href != null ? e.href : e.src,
+          path: ((_ref = e.attributes['src']) != null ? _ref.value : void 0) != null ? e.attributes['src'].value : (_ref1 = e.attributes['href']) != null ? _ref1.value : void 0,
+          href: e.href,
+          src: e.src,
+          type: e.type,
+          tagName: e.tagName
+        };
+      }).filter(function(e) {
+        if (e.url.match('^(https?)|(chrome-extension)|(file):\/\/.*') != null) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+    };
+
     return Application;
 
   })();
 
-  module.exports = new Application;
+  module.exports = Application;
 
 
   /*

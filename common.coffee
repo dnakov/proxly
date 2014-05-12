@@ -1,125 +1,111 @@
-# server = require './tcp-server.js'
-# require './chrome-mock'
-# root.q = require 'q'
+# http://stackoverflow.com/a/21742093
+(() ->
+  methods = [
+    'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
+    'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
+    'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
+    'timeStamp', 'trace', 'warn']
+  noop = () ->
+    # stub undefined methods.
+    for m in methods  when  !console[m]
+      console[m] = noop
 
-Array::where = (query) ->
-    return [] if typeof query isnt "object"
-    hit = Object.keys(query).length
-    @filter (item) ->
-        match = 0
-        for key, val of query
-            match += 1 if item[key] is val
-        if match is hit then true else false
-
-Array::toDict = (key) ->
-  @reduce ((dict, obj) -> dict[ obj[key] ] = obj if obj[kewy]?; return dict), {}
-
+  if Function.prototype.bind?
+    window.show = Function.prototype.bind.call(console.log, console)
+  else
+    window.show = () ->
+      Function.prototype.apply.call(console.log, console, arguments)
+)()
 
 class MSG
-    constructor: (config) ->
-        @config = config
-    Local: (message) ->
-        console.log "== MESSAGE ==> #{ message }"
-        chrome.runtime.sendMessage message
-    Ext: (message) ->
-        console.log "== MESSAGE #{ @config.EXT_TYPE } ==> #{ message }"
-        chrome.runtime.sendMessage @config.EXT_ID, message
+  isContentScript: location.protocol isnt 'chrome-extension:'
+  constructor: (config) ->
+    @config = config
+  Local: (message, respond) ->
+    show "== MESSAGE #{ JSON.stringify message } ==>"
+    chrome.runtime.sendMessage message, respond
+  Ext: (message, respond) ->
+    show "== MESSAGE #{ JSON.stringify message } ==>"
+    chrome.runtime.sendMessage @config.EXT_ID, message, respond
 
 class LISTEN
-    local:
-        api: chrome.runtime.onMessage
-        listeners:{}
-    external:
-        api: chrome.runtime.onMessageExternal
-        listeners:{}
-    constructor: (config) ->
-        @config = config
-        @local.api.addListener @_onMessage
-        @external.api?.addListener @_onMessageExternal
+  local:
+    api: chrome.runtime.onMessage
+    listeners:{}
+  external:
+    api: chrome.runtime.onMessageExternal
+    listeners:{}
+  constructor: (config) ->
+    @config = config
+    @local.api.addListener @_onMessage
+    @external.api?.addListener @_onMessageExternal
 
-    Local: (message, callback) =>
-      @local.listeners[message] = callback
+  Local: (message, callback) =>
+    @local.listeners[message] = callback
 
-    Ext: (message, callback) =>
-      @external.listeners[message] = callback
+  Ext: (message, callback) =>
+    @external.listeners[message] = callback
 
-    _onMessageExternal: (request, sender, sendResponse) =>
-        console.log "<== EXTERNAL MESSAGE == #{ @config.EXT_TYPE } ==" + request
-        if sender.id isnt @config.EXT_ID then return undefined
-        @external.listeners[key]? request[key] for key of request
+  _onMessageExternal: (request, sender, sendResponse) =>
+    show "<== EXTERNAL MESSAGE == #{ @config.EXT_TYPE } ==" + request
+    if sender.id isnt @config.EXT_ID then return undefined
+    @external.listeners[key]? request[key], sendResponse for key of request
 
-    _onMessage: (request, sender, sendResponse) =>
-        console.log "<== MESSAGE == #{ @config.EXT_TYPE } ==" + request
-        @local.listeners[key]? request[key] for key of request
-
-    # class Listener
-    #   listeners: {}
-    #   external:false
-    #   api: chrome.runtime.onMessage
-    #   constructor: (external) ->
-    #     @external = external
-    #     @api = if @external then chrome.runtime.onMessageExternal else @api
-    #     @api.addListener @onMessage
-    #   addListener: (message, callback) ->
-    #     @listeners[message] = callback
-    #   onMessage: (request, sender, sendResponse) =>
-    #     console.log "<== MESSAGE == #{ @config.EXT_TYPE } ==" + request
-    #     if @external and sender.id isnt @config.EXT_ID then return undefined
-    #     else
-    #       for key of request
-    #         do (key) => if @listeners[key]? then @listeners[key] request.key
+  _onMessage: (request, sender, sendResponse) =>
+    show "<== MESSAGE == #{ @config.EXT_TYPE } ==" + request
+    @local.listeners[key]? request[key], sendResponse for key of request
 
 class Data
-    mapping:[
-        directory:null
-        urlPattern:null
-    ]
-    resources:[
-        resource:null
-        file:null
-    ]
+  mapping:[
+    directory:null
+    urlPattern:null
+  ]
+  resources:[
+    resource:null
+    file:null
+  ]
 
 
 
 class Storage
-    api: chrome.storage.local
-    data: {}
-    callback: () ->
-    constructor: (callback) ->
-        @callback = callback
-        @retrieveAll()
-        @onChangedAll()
+  api: chrome.storage.local
+  data: {}
+  callback: () ->
+  constructor: (callback) ->
+    @callback = callback
+    @retrieveAll()
+    @onChangedAll()
 
-    save: (key, item) ->
-      obj = {}
-      obj[key] = item
-      @api.set obj
+  save: (key, item) ->
+    obj = {}
+    obj[key] = item
+    @api.set obj
 
-    saveAll: () ->
-        @api.set @data
+  saveAll: () ->
+    @api.set @data
 
-    retrieve: (key, cb) ->
-        @api.get key, (results) ->
-            @data[r] = results[r] for r of results
-            if cb? then cb results[key]
+  retrieve: (key, cb) ->
+    @api.get key, (results) ->
+      @data[r] = results[r] for r of results
+      if cb? then cb results[key]
 
 
-    retrieveAll: (cb) ->
-        @api.get (result) =>
-            @data = result
-            @callback? result
-            cb? result
-            console.log result
+  retrieveAll: (cb) ->
+    @api.get (result) =>
+      @data = result
+      @callback? result
+      cb? result
+      show result
 
-    onChanged: (key, cb) ->
-      chrome.storage.onChanged.addListener (changes, namespace) ->
-        if changes[key]? and cb? then cb changes[key].newValue
-        @callback? changes
+  onChanged: (key, cb) ->
+    chrome.storage.onChanged.addListener (changes, namespace) ->
+      if changes[key]? and cb? then cb changes[key].newValue
+      @callback? changes
 
-    onChangedAll: () ->
-        chrome.storage.onChanged.addListener (changes,namespace) =>
-            @data[c] = changes[c].newValue for c of changes
-            @callback? changes
+  onChangedAll: () ->
+    chrome.storage.onChanged.addListener (changes,namespace) =>
+      @data[c] = changes[c].newValue for c of changes
+      @callback? changes
 
 
 # class DirectoryStore
@@ -130,74 +116,70 @@ class Storage
 
 
 class FileSystem
-    api: chrome.fileSystem
+  api: chrome.fileSystem
 
-    constructor: () ->
+  constructor: () ->
 
-    # @dirs: new DirectoryStore
-    fileToArrayBuffer: (blob, callback, opt_errorCallback) ->
-      reader = new FileReader()
-      reader.onload = (e) ->
-        callback e.target.result
-        return
+  # @dirs: new DirectoryStore
+  # fileToArrayBuffer: (blob, onload, onerror) ->
+  #   reader = new FileReader()
+  #   reader.onload = onload
 
-      reader.onerror = (e) ->
-        opt_errorCallback e  if opt_errorCallback
-        return
+  #   reader.onerror = onerror
 
-      reader.readAsArrayBuffer blob
-      return
+  #   reader.readAsArrayBuffer blob
 
-    readFile: (dirEntry, path, success, error) ->
-        getFileEntry dirEntry, path, (fileEntry) ->
-            fileEntry.file (file) ->
-                fileToArrayBuffer file, (arrayBuffer) ->
-                    success arrayBuffer
-                    ,error
-                ,error
-            ,error
+  readFile: (dirEntry, path, success, error) ->
+    @getFileEntry dirEntry, path,
+      (fileEntry) =>
+        fileEntry.file (file) =>
+          success(fileEntry, file)
+        ,(error) => error()
+      ,(error) => error()
 
-    getFileEntry: (dirEntry, path, success, error) ->
-        dirEntry.getFile path, {}, (fileEntry) ->
-            success fileEntry
+  getFileEntry: (dirEntry, path, success, error) ->
+    if dirEntry?.getFile?
+      dirEntry.getFile path, {}, (fileEntry) ->
+        success fileEntry
+    else error()
 
-    openDirectory: (callback) =>
-        @api.chooseEntry type:'openDirectory', (directoryEntry, files) =>
-            @api.getDisplayPath directoryEntry, (pathName) =>
-                dir =
-                  relPath: directoryEntry.fullPath.replace '/' + directoryEntry.name, ''
-                  directoryEntryId: @api.retainEntry directoryEntry
-                  entry: directoryEntry
+  openDirectory: (callback) =>
+    @api.chooseEntry type:'openDirectory', (directoryEntry, files) =>
+      @api.getDisplayPath directoryEntry, (pathName) =>
+        dir =
+            relPath: directoryEntry.fullPath.replace('/' + directoryEntry.name, '')
+            directoryEntryId: @api.retainEntry(directoryEntry)
+            entry: directoryEntry
 
-                callback pathName, dir
-                # @getOneDirList dir
-                # Storage.save 'directories', @scope.directories (result) ->
+          callback pathName, dir
+            # @getOneDirList dir
+            # Storage.save 'directories', @scope.directories (result) ->
 
 
 
 class Mapping
-    resource: null #http://blala.com/what/ever/index.js
-    local: null #/someshittyDir/otherShittyDir/
-    regex: null
-    constructor: (resource, local, regex) ->
-      [@local, @resource, @regex] = [local, resource, regex]
+  resource: null #http://blala.com/what/ever/index.js
+  local: null #/someshittyDir/otherShittyDir/
+  regex: null
+  constructor: (resource, local, regex) ->
+    [@local, @resource, @regex] = [local, resource, regex]
 
-    getLocalResource: () ->
-      @resource.replace(@regex, @local)
+  getLocalResource: () ->
+    @resource.replace(@regex, @local)
 
-    setRedirectDeclarative: (tabId) ->
-      rules = [].push
-        priority:100
-        conditions: [
-            new chrome.declarativeWebRequest.RequestMatcher
-                url:
-                    urlMatches:@regex
-            ]
-        actions: [
-            new chrome.declarativeWebRequest.RedirectRequest
-                redirectUrl:@getLocalResource()
+  setRedirectDeclarative: (tabId) ->
+    rules = [].push
+      priority:100
+      conditions: [
+        new chrome.declarativeWebRequest.RequestMatcher
+          url:
+            urlMatches:@regex
         ]
-      chrome.declarativeWebRequest.onRequest.addRules rules
+      actions: [
+        new chrome.declarativeWebRequest.RedirectRequest
+          redirectUrl:@getLocalResource()
+      ]
+    chrome.declarativeWebRequest.onRequest.addRules rules
 
 # class StorageFactory
 #   makeObject: (type) ->
@@ -220,462 +202,259 @@ class File
     constructor: (directoryEntry, path) ->
         @dirEntry = directoryEntry
         @path = path
+###
 
+#TODO: rewrite this class using the new chrome.sockets.* api when you can manage to make it work
 class Server
-    constructor: () ->
+  socket: chrome.socket
+  # tcp: chrome.sockets.tcp
+  host:"127.0.0.1"
+  port:8082
+  maxConnections:500
+  socketProperties:
+      persistent:true
+      name:'SLRedirector'
+  socketInfo:null
+  getLocalFile:null
+  socketIds:[]
+  stopped:false
 
-    start: () ->
-        socket.create "tcp", {}, (_socketInfo) ->
-            @socketInfo = _socketInfo;
-            socket.listen socketInfo.socketId, "127.0.0.1", 31337, 50, (result) ->
-                console.log "LISTENING:", result
-                socket.accept @socketInfo.socketId, @_onAccept
+  constructor: () ->
 
-    stop: () ->
-        socket.destroy @socketInfo.socketId
+  start: (host,port,maxConnections, cb) ->
+    @host = if host? then host else @host
+    @port = if port? then port else @port
+    @maxConnections = if maxConnections? then maxConnections else @maxConnections
 
-    _onAccept: (acceptInfo) ->
-        console.log("ACCEPT", acceptInfo)
-        info = @_readFromSocket acceptInfo.socketId
-        @getFile uri, (file) ->
+    @killAll () =>
+      @socket.create 'tcp', {}, (socketInfo) =>
+        @socketIds = []
+        @socketIds.push socketInfo.socketId
+        chrome.storage.local.set 'socketIds':@socketIds
+        @socket.listen socketInfo.socketId, @host, @port, (result) =>
+          show 'listening ' + socketInfo.socketId
+          @stopped = false
+          @socketInfo = socketInfo
+          @socket.accept socketInfo.socketId, @_onAccept
 
-    getFile: (uri) ->
+  killAll: (callback) ->
+    chrome.storage.local.get 'socketIds', (result) =>
+      show 'got ids'
+      show result
+      @socketIds = result.socketIds
+      for s in @socketIds?
+        do (s) =>
+          try
+            @socket.disconnect s
+            @socket.destroy s
+            show 'killed ' + s
+          catch error
+            show "could not kill #{ s } because #{ error }"
+      callback?()
 
-    _write200Response: (socketId, file, keepAlive) ->
-      contentType = (if (file.type is "") then "text/plain" else file.type)
-      contentLength = file.size
-      header = stringToUint8Array("HTTP/1.0 200 OK\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
-      outputBuffer = new ArrayBuffer(header.byteLength + file.size)
-      view = new Uint8Array(outputBuffer)
-      view.set header, 0
-      fileReader = new FileReader()
-      fileReader.onload = (e) ->
-        view.set new Uint8Array(e.target.result), header.byteLength
-        socket.write socketId, outputBuffer, (writeInfo) ->
-          console.log "WRITE", writeInfo
-          if keepAlive
-            readFromSocket socketId
-          else
-            socket.destroy socketId
-            socket.accept socketInfo.socketId, onAccept
-          return
+  stop: () ->
+    @killAll()
+    @stopped = true
 
+  _onReceive: (receiveInfo) =>
+    show("Client socket 'receive' event: sd=" + receiveInfo.socketId
+    + ", bytes=" + receiveInfo.data.byteLength)
+
+  _onListen: (serverSocketId, resultCode) =>
+    return show 'Error Listening: ' + chrome.runtime.lastError.message if resultCode < 0
+    @serverSocketId = serverSocketId
+    @tcpServer.onAccept.addListener @_onAccept
+    @tcpServer.onAcceptError.addListener @_onAcceptError
+    @tcp.onReceive.addListener @_onReceive
+    # show "["+socketInfo.peerAddress+":"+socketInfo.peerPort+"] Connection accepted!";
+    # info = @_readFromSocket socketInfo.socketId
+    # @getFile uri, (file) ->
+  _onAcceptError: (error) ->
+    show error
+
+  _onAccept: (socketInfo) =>
+    # return null if info.socketId isnt @serverSocketId
+    show("Server socket 'accept' event: sd=" + socketInfo.socketId)
+    @_readFromSocket socketInfo.socketId, (info) =>
+      @getLocalFile info,
+        (fileEntry, fileReader) =>
+          @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive,
+        (error) =>
+          @_writeError socketInfo.socketId, 404, info.keepAlive
+    # @socket.accept socketInfo.socketId, @_onAccept
+
+
+
+  stringToUint8Array: (string) ->
+    buffer = new ArrayBuffer(string.length)
+    view = new Uint8Array(buffer)
+    i = 0
+
+    while i < string.length
+      view[i] = string.charCodeAt(i)
+      i++
+    view
+
+  arrayBufferToString: (buffer) ->
+    str = new Uint8Array(buffer)
+    s = 0
+
+    while s < uArrayVal.length
+      str += String.fromCharCode(uArrayVal[s])
+      s++
+    str
+
+  _write200Response: (socketId, fileEntry, file, keepAlive) ->
+    contentType = (if (file.type is "") then "text/plain" else file.type)
+    contentLength = file.size
+    header = @stringToUint8Array("HTTP/1.0 200 OK\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
+    outputBuffer = new ArrayBuffer(header.byteLength + file.size)
+    view = new Uint8Array(outputBuffer)
+    view.set header, 0
+
+    reader = new FileReader
+    reader.onload = (ev) =>
+      view.set new Uint8Array(ev.target.result), header.byteLength
+      @socket.write socketId, outputBuffer, (writeInfo) =>
+        show writeInfo
+        # @_readFromSocket socketId
+        @end socketId, keepAlive
+    reader.onerror = (error) =>
+      @end socketId, keepAlive
+    reader.readAsArrayBuffer file
+
+
+    # @end socketId
+    # fileReader = new FileReader()
+    # fileReader.onload = (e) =>
+    #   view.set new Uint8Array(e.target.result), header.byteLength
+    #   @socket.write socketId, outputBuffer, (writeInfo) =>
+    #     show "WRITE", writeInfo
+    #       @_write200Response socketId
+
+
+  _readFromSocket: (socketId, cb) ->
+    @socket.read socketId, (readInfo) =>
+      show "READ", readInfo
+
+      # Parse the request.
+      data = @arrayBufferToString(readInfo.data)
+      show data
+
+      if data.indexOf("GET ") isnt 0
+        @end socketId
         return
 
-      fileReader.readAsArrayBuffer file
-      return
+      keepAlive = false
+      keepAlive = true if data.indexOf 'Connection: keep-alive' isnt -1
 
-    _readFromSocket: (socketId) ->
-        socket.read socketId, (readInfo) ->
-          console.log "READ", readInfo
+      uriEnd = data.indexOf(" ", 4)
 
-          # Parse the request.
-          data = arrayBufferToString(readInfo.data)
-          if data.indexOf("GET ") is 0
-            keepAlive = false
-            keepAlive = true  unless data.indexOf("Connection: keep-alive") is -1
+      return end socketId if uriEnd < 0
 
-            # we can only deal with GET requests
-            uriEnd = data.indexOf(" ", 4)
-            return  if uriEnd < 0
-            uri = data.substring(4, uriEnd)
+      uri = data.substring(4, uriEnd)
+      if not uri?
+        writeError socketId, 404, keepAlive
+        return
 
-            # strip qyery string
-            q = uri.indexOf("?")
-            info =
-                uri: (uri.substring(0, q) unless q is -1)
-                keepAlive:keepAlive
+      info =
+        uri: uri
+        keepAlive:keepAlive
+      info.referer = data.match(/Referer:\s(.*)/)?[1]
+      #success
+      cb? info
 
-        stringToUint8Array: (string) ->
-          buffer = new ArrayBuffer(string.length)
-          view = new Uint8Array(buffer)
-          i = 0
+  end: (socketId, keepAlive) ->
+      # if keepAlive
+      #   @_readFromSocket socketId
+      # else
+    @socket.disconnect socketId
+    @socket.destroy socketId
+    show 'ending ' + socketId
+    @socket.accept @socketInfo.socketId, @_onAccept
 
-          while i < string.length
-            view[i] = string.charCodeAt(i)
-            i++
-          view
-
-        arrayBufferToString: (buffer) ->
-          str = ""
-          uArrayVal = new Uint8Array(buffer)
-          s = 0
-
-          while s < uArrayVal.length
-            str += String.fromCharCode(uArrayVal[s])
-            s++
-          str
-###
-class Util
-    constructor: () ->
+  _writeError: (socketId, errorCode, keepAlive) ->
+    file = size: 0
+    console.info "writeErrorResponse:: begin... "
+    console.info "writeErrorResponse:: file = " + file
+    contentType = "text/plain" #(file.type === "") ? "text/plain" : file.type;
+    contentLength = file.size
+    header = @stringToUint8Array("HTTP/1.0 " + errorCode + " Not Found\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
+    console.info "writeErrorResponse:: Done setting header..."
+    outputBuffer = new ArrayBuffer(header.byteLength + file.size)
+    view = new Uint8Array(outputBuffer)
+    view.set header, 0
+    console.info "writeErrorResponse:: Done setting view..."
+    @socket.write socketId, outputBuffer, (writeInfo) =>
+      show "WRITE", writeInfo
+      @end socketId, keepAlive
 
 class Application
 
-    config:
-        APP_ID: 'chpffdckkhhppmgclfbompfgkghpmgpg'
-        EXTENSION_ID: 'aajhphjjbcnnkgnhlblniaoejpcnjdpf'
+  config:
+    APP_ID: 'cecifafpheghofpfdkhekkibcibhgfec'
+    EXTENSION_ID: 'dddimbnjibjcafboknbghehbfajgggep'
 
-    data:null
-    LISTEN: null
-    MSG: null
-    Storage: null
-    FS: null
+  data:null
+  LISTEN: null
+  MSG: null
+  Storage: null
+  FS: null
+  Server: null
 
-    constructor: () ->
-        @Storage = new Storage
-        @FS = new FileSystem
+  constructor: () ->
+    @Storage = new Storage
+    @FS = new FileSystem
+    @Server = new Server
+    @config.SELF_ID = chrome.runtime.id
+    @config.EXT_ID = if @config.APP_ID is @config.SELF_ID then @config.EXTENSION_ID else @config.APP_ID
+    @config.EXT_TYPE = if @config.APP_ID isnt @config.SELF_ID then 'EXTENSION' else 'APP'
+    @MSG = new MSG @config
+    @LISTEN = new LISTEN @config
 
-        @config.SELF_ID = chrome.runtime.id
-        @config.EXT_ID = if @config.APP_ID is @config.SELF_ID then @config.EXTENSION_ID else @config.APP_ID
-        @config.EXT_TYPE = if @config.APP_ID isnt @config.SELF_ID then 'EXTENSION' else 'APP'
-        @MSG = new MSG @config
-        @LISTEN = new LISTEN @config
+    @appWindow = null
+    @port = 31337
+    @data = @Storage.data
+    @init()
 
-        @appWindow = null
-        @port = 31337
-        @data = @Storage.data
-        @init()
+  init: () =>
 
-    init: () =>
+    # LISTEN.EXT 'directoryEntryId' (dirId) ->
+      # @directories.push dirId
+  addMapping: () ->
+  # if @data.directories[]
+      # @FS.openDirectory (pathName, dir) ->
+      # match = @data.resources
+      # if match.length > 0 then
 
-      # LISTEN.EXT 'directoryEntryId' (dirId) ->
-        # @directories.push dirId
-    addMapping: () ->
-    # if @data.directories[]
-        # @FS.openDirectory (pathName, dir) ->
-        # match = @data.resources
-        # if match.length > 0 then
+  launchApp: (cb) ->
+    chrome.management.launchApp @config.APP_ID
 
-    launchApp: (cb) ->
-        chrome.management.launchApp @config.APP_ID
+  startServer: () =>
 
-    startServer: () =>
-      @server = new TcpServer('127.0.0.1', @port)
-      @server.listen
+    # @server = new TcpServer('127.0.0.1', @port)
+    # @server.listen
 
-    openApp: () =>
-      chrome.app.window.create('index.html',
-          id: "mainwin"
-          bounds:
-              width:500
-              height:800,
-      (win) =>
-          @appWindow = win)
+  openApp: () =>
+    chrome.app.window.create('index.html',
+      id: "mainwin"
+      bounds:
+        width:500
+        height:800,
+    (win) =>
+      @appWindow = win)
 
-    setRedirect: () =>
-      undefined
-
-    getResources: (selector) ->
-      [].map.call document.querySelectorAll(selector), (e) ->
-        url: if e.href? then e.href else e.src
-        path: if e.attributes['src']?.value? then e.attributes['src'].value else e.attributes['href']?.value
-        href: e.href
-        src: e.src
-        type: e.type
-        tagName: e.tagName
-      .filter (e) ->
-          if e.url.match('^(https?)|(chrome-extension)|(file):\/\/.*')? then true else false
-
+  setRedirect: () =>
+    undefined
+  show = -> # jshint -W021
+    if window.console
+      if Function::bind
+        log = Function::bind.call(console.log, console)
+      else
+        log = ->
+          Function::apply.call console.log, console, arguments_
+          return
+      log.apply this, arguments_
 
 
 module.exports = Application
-
-# mapFiles = (directoryEntryId) ->
-#     chrome.storage.local.get (resources) ->
-#         chrome.fileSystem.restoreEntry(directoryEntryId, (dir) ->
-
-#         )
-
-# testPath = (url, directoryEntry) ->
-#     for name in url.split('/').slice(0).reverse()
-#         do (name) ->
-#             directoryEntry.getFile(path + name, {},
-#                 (file) ->
-#                 )
-
-
-
-
-
-
-
-
-
-
-
-
-###
- var extMsgId = 'pmgnnbdfmmpdkgaamkdiipfgjbpgiofc';
-  var addDirectory = function() {
-    chrome.app.window.create('index.html', {
-        id: "mainwin",
-        bounds: {
-          width: 50,
-          height: 50
-        },
-    }, function(win) {
-        mainWin = win;
-    });
-  }
-
-
-
-    chrome.runtime.onMessage.addListener(
-        function(request, sender, sendResponse) {
-          // if (sender.id != extMsgId)
-          //   return sendResponse({"result":"sorry, could not process your message"});
-
-          if (request.directoryEntryId) {
-            // sendResponse({"result":"Got Directory"});
-            console.log(request.directoryEntryId);
-            directories.push(request.directoryEntryId);
-            // chrome.fileSystem.restoreEntry(request.directoryEntryId, function(directoryEntry) {
-            //     console.log(directoryEntry);
-            // });
-
-          } else {
-            // sendResponse({"result":"Ops, I don't understand this message"});
-          }
-      });
-          chrome.runtime.onMessageExternal.addListener(
-        function(request, sender, sendResponse) {
-          if (sender.id != extMsgId) {
-            sendResponse({"result":"sorry, could not process your message"});
-            return;  // don't allow this extension access
-          } else if (request.openDirectory) {
-            // sendResponse({"result":"Opening Directory"});
-            addDirectory();
-          } else {
-            sendResponse({"result":"Ops, I don't understand this message"});
-          }
-      });
-
-    socket.create("tcp", {}, function(_socketInfo) {
-        socketInfo = _socketInfo;
-        socket.listen(socketInfo.socketId, "127.0.0.1", 33333, 50, function(result) {
-        console.log("LISTENING:", result);
-        socket.accept(socketInfo.socketId, onAccept);
-    });
-    });
-
-    var stopSocket = function() {
-        socket.destroy(socketInfo.socketId);
-    }
-
-
-###
-
-###
-onload = function() {
-  var start = document.getElementById("start");
-  var stop = document.getElementById("stop");
-  var hosts = document.getElementById("hosts");
-  var port = document.getElementById("port");
-  var directory = document.getElementById("directory");
-
-  var socket = chrome.socket;
-  var socketInfo;
-  var filesMap = {};
-
-  var rootDir;
-  var port, extPort;
-  var directories = [];
-
-  var stringToUint8Array = function(string) {
-    var buffer = new ArrayBuffer(string.length);
-    var view = new Uint8Array(buffer);
-    for(var i = 0; i < string.length; i++) {
-      view[i] = string.charCodeAt(i);
-    }
-    return view;
-  };
-
-  var arrayBufferToString = function(buffer) {
-    var str = '';
-    var uArrayVal = new Uint8Array(buffer);
-    for(var s = 0; s < uArrayVal.length; s++) {
-      str += String.fromCharCode(uArrayVal[s]);
-    }
-    return str;
-  };
-
-  var logToScreen = function(log) {
-    logger.textContent += log + "\n";
-  }
-
-  var writeErrorResponse = function(socketId, errorCode, keepAlive) {
-    var file = { size: 0 };
-    console.info("writeErrorResponse:: begin... ");
-    console.info("writeErrorResponse:: file = " + file);
-    var contentType = "text/plain"; //(file.type === "") ? "text/plain" : file.type;
-    var contentLength = file.size;
-    var header = stringToUint8Array("HTTP/1.0 " + errorCode + " Not Found\nContent-length: " + file.size + "\nContent-type:" + contentType + ( keepAlive ? "\nConnection: keep-alive" : "") + "\n\n");
-    console.info("writeErrorResponse:: Done setting header...");
-    var outputBuffer = new ArrayBuffer(header.byteLength + file.size);
-    var view = new Uint8Array(outputBuffer)
-    view.set(header, 0);
-    console.info("writeErrorResponse:: Done setting view...");
-    socket.write(socketId, outputBuffer, function(writeInfo) {
-      console.log("WRITE", writeInfo);
-      if (keepAlive) {
-        readFromSocket(socketId);
-      } else {
-        socket.destroy(socketId);
-        socket.accept(socketInfo.socketId, onAccept);
-      }
-    });
-    console.info("writeErrorResponse::filereader:: end onload...");
-
-    console.info("writeErrorResponse:: end...");
-  };
-
-  var write200Response = function(socketId, file, keepAlive) {
-    var contentType = (file.type === "") ? "text/plain" : file.type;
-    var contentLength = file.size;
-    var header = stringToUint8Array("HTTP/1.0 200 OK\nContent-length: " + file.size + "\nContent-type:" + contentType + ( keepAlive ? "\nConnection: keep-alive" : "") + "\n\n");
-    var outputBuffer = new ArrayBuffer(header.byteLength + file.size);
-    var view = new Uint8Array(outputBuffer)
-    view.set(header, 0);
-
-    var fileReader = new FileReader();
-    fileReader.onload = function(e) {
-       view.set(new Uint8Array(e.target.result), header.byteLength);
-       socket.write(socketId, outputBuffer, function(writeInfo) {
-         console.log("WRITE", writeInfo);
-         if (keepAlive) {
-           readFromSocket(socketId);
-         } else {
-           socket.destroy(socketId);
-           socket.accept(socketInfo.socketId, onAccept);
-         }
-      });
-    };
-
-    fileReader.readAsArrayBuffer(file);
-  };
-
-  var onAccept = function(acceptInfo) {
-    console.log("ACCEPT", acceptInfo)
-    readFromSocket(acceptInfo.socketId);
-  };
-
-  var readFromSocket = function(socketId) {
-    //  Read in the data
-    socket.read(socketId, function(readInfo) {
-      console.log("READ", readInfo);
-      // Parse the request.
-      var data = arrayBufferToString(readInfo.data);
-      if(data.indexOf("GET ") == 0) {
-        var keepAlive = false;
-        if (data.indexOf("Connection: keep-alive") != -1) {
-          keepAlive = true;
-        }
-
-        // we can only deal with GET requests
-        var uriEnd =  data.indexOf(" ", 4);
-        if(uriEnd < 0) {   return; }
-        var uri = data.substring(4, uriEnd);
-        // strip qyery string
-        var q = uri.indexOf("?");
-        if (q != -1) {
-          uri = uri.substring(0, q);
-        }
-
-        chrome.fileSystem.restoreEntry(directories[0])
-        .then(
-            (function(url) {
-                return function(directoryEntry) {
-                    console.log(directoryEntry);
-                    console.log(uri);
-                    directoryEntry.getFile('myNewAppDEV.resource/index.js', {})
-                    .then(function(file) {
-                        console.log(file);
-                        write200Response(socketId, file, keepAlive);
-                    },function(e) {
-                        console.log(e);
-                    });
-
-                }
-             })(uri)
-        );
-
-        // var file =
-        // if(!!file == false) {
-        //   console.warn("File does not exist..." + uri);
-        //   writeErrorResponse(socketId, 404, keepAlive);
-        //   return;
-        // }
-        // logToScreen("GET 200 " + uri);
-        // write200Response(socketId, file, keepAlive);
-      // }
-      // else {
-        // Throw an error
-        // socket.destroy(socketId);
-      // }
-
-  };
-});
-}
-
-
-  var extMsgId = 'pmgnnbdfmmpdkgaamkdiipfgjbpgiofc';
-
-
-    chrome.runtime.onMessageExternal.addListener(
-        function(request, sender, sendResponse) {
-          if (sender.id != extMsgId) {
-            sendResponse({"result":"sorry, could not process your message"});
-            return;  // don't allow this extension access
-          } else if (request.openDirectory) {
-            // sendResponse({"result":"Opening Directory"});
-            addDirectory();
-          } else {
-            sendResponse({"result":"Ops, I don't understand this message"});
-          }
-      });
-
-
-    chrome.runtime.onMessage.addListener(
-        function(request, sender, sendResponse) {
-          // if (sender.id != extMsgId)
-          //   return sendResponse({"result":"sorry, could not process your message"});
-
-          if (request.directoryEntryId) {
-            // sendResponse({"result":"Got Directory"});
-            console.log(request.directoryEntryId);
-            directories.push(request.directoryEntryId);
-            // chrome.fileSystem.restoreEntry(request.directoryEntryId, function(directoryEntry) {
-            //     console.log(directoryEntry);
-            // });
-
-          } else {
-            // sendResponse({"result":"Ops, I don't understand this message"});
-          }
-      });
-    socket.create("tcp", {}, function(_socketInfo) {
-        socketInfo = _socketInfo;
-        socket.listen(socketInfo.socketId, "127.0.0.1", 33333, 50, function(result) {
-        console.log("LISTENING:", result);
-        socket.accept(socketInfo.socketId, onAccept);
-    });
-    });
-
-    var stopSocket = function() {
-        socket.destroy(socketInfo.socketId);
-    }
-
-  var addDirectory = function() {
-    chrome.app.window.create('index.html', {
-        id: "mainwin",
-        bounds: {
-          width: 50,
-          height: 50
-        },
-    }, function(win) {
-        mainWin = win;
-    });
-  }
-
-};
-###
-
