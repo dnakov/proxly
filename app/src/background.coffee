@@ -87,7 +87,7 @@ class AppBackground extends Application
             @MSG.Local 'server':@Server
 
     stopServer: () ->
-        @Server.stop
+        @Server.stop()
         @MSG.Local 'server':null
 
 app = new AppBackground
@@ -368,4 +368,3 @@ onload = function() {
 
 };
 ###
-

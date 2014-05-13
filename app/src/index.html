@@ -21,8 +21,8 @@
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
       </button>
-      <a ng-click="server.status = server.status == 'on' ? 'off' : 'on'" style="" href="#" class="navbar-brand">
-        <span class="glyphicon glyphicon-off"></span>http://{{server.host}}:{{server.port}}/  {{server.status}}
+      <a ng-click="toggleServer()" style="" href="#" class="navbar-brand">
+        <span class="glyphicon glyphicon-off server-{{server.status}}"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span>http://{{server.host}}:{{server.port}}/</span>
       </a>
 
     </div>
@@ -62,14 +62,15 @@
 
 
       </div>
-          <div class="panel panel-default" ng-repeat="item in maps">
-            <div class="col-xs-6">
-              <a class="btn pull-right btn-danger" ng-click="deleteMapping(item)">Delete</a>
-            </div>
+          <div class="panel panel-default" ng-repeat="item in maps track by $index">
+
             <div class="panel-content">
-              <h4>{{item.directory}}
-              <button class="btn btn-sm btn-info" ng-click="openDirectory(item)">{{item.directory == null ? 'Add' : 'Change'}}</button></h4>
-            </div>
+              <h4>{{item.directory}}&nbsp;
+                <button class="btn btn-danger btn-xs pull-right" ng-click="deleteMapping(item)">Delete</button>
+                <button class="btn btn-xs pull-right btn-info" ng-click="openDirectory(item)">{{item.directory == null ? 'Add' : 'Change'}}</button>
+              </h4>
+
+          </div>
         <div class="panel-footer">
         <div class="row">
           <div class="col-xs-6">

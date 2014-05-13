@@ -44,11 +44,15 @@ class MainCtrl
     @scope.openDirectory = @openDirectory
     @scope.getHtmlSafe = @getHtmlSafe
     @scope.setLocalPath = @setLocalPath
+    @scope.toggleServer = @toggleServer
+    @scope.deleteMapping = @deleteMapping
 
     @scope.presets = [
       presetName:'Salesforce'
       url:'https.*\/resource(\/[0-9]+)?\/([A-Za-z0-9\-._]+\/)?'
       ]
+
+    @scope.MSG = @app.MSG
 
     @init()
 
@@ -78,7 +82,6 @@ class MainCtrl
     reg = new RegExp item.url
     (resource.localPath = resource.url.replace(reg, item.regexRepl)) for resource in @filteredResources
 
-
   openDirectory: (mapDir) =>
     @app.FS.openDirectory (pathName, dir) =>
       mapDir.directory = pathName
@@ -89,6 +92,17 @@ class MainCtrl
 
   getHtmlSafe: (text) ->
     @sce.trustAsHtml text
+
+  toggleServer: () ->
+    if @server.stopped
+      @MSG.Local 'startServer':true
+      @server.stopped = false
+      @server.status = 'on'
+    else
+      @MSG.Local 'stopServer':true
+      @server.stopped = true
+      @server.status = 'off'
+
 
   getFullDirList: (directories) ->
     for own key, d of directories

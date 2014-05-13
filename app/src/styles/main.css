@@ -36,6 +36,12 @@
         color:#00BC8C;
 
     }
+    .server-on {
+        color:#00bc8c;
+    }
+    .server-off {
+        color:#e74c3c;
+    }
 /*    .iconic-cogs-cog-large {
         -webkit-transform-origin: 50% 50% 0;
         -webkit-animation: rotateCog 5s infinite linear;

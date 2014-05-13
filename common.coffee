@@ -392,8 +392,8 @@ class Server
 class Application
 
   config:
-    APP_ID: 'cecifafpheghofpfdkhekkibcibhgfec'
-    EXTENSION_ID: 'dddimbnjibjcafboknbghehbfajgggep'
+    APP_ID: 'nfnmnnonddcblacejdenfhicalbkiiod'
+    EXTENSION_ID: 'bdjhbiogleankkadgoloihcbjalmndal'
 
   data:null
   LISTEN: null
