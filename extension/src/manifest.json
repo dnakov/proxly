@@ -41,7 +41,7 @@
 
        "permissions": [
        "management",
-       "experimental",
+
        "activeTab",
         "storage", "background",
         "notifications", {"fileSystem": ["write", "retainEntries", "directory"]},

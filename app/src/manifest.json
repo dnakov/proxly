@@ -22,7 +22,7 @@
             "tcp-listen::",
             "udp-send-to::"
         ]},
-  "experimental",
+
   "management",
 
 "webview", "<all_urls>",

@@ -419,21 +419,9 @@ class Application
 
   init: () =>
 
-    # LISTEN.EXT 'directoryEntryId' (dirId) ->
-      # @directories.push dirId
-  addMapping: () ->
-  # if @data.directories[]
-      # @FS.openDirectory (pathName, dir) ->
-      # match = @data.resources
-      # if match.length > 0 then
 
   launchApp: (cb) ->
     chrome.management.launchApp @config.APP_ID
-
-  startServer: () =>
-
-    # @server = new TcpServer('127.0.0.1', @port)
-    # @server.listen
 
   openApp: () =>
     chrome.app.window.create('index.html',
@@ -443,18 +431,6 @@ class Application
         height:800,
     (win) =>
       @appWindow = win)
-
-  setRedirect: () =>
-    undefined
-  show = -> # jshint -W021
-    if window.console
-      if Function::bind
-        log = Function::bind.call(console.log, console)
-      else
-        log = ->
-          Function::apply.call console.log, console, arguments_
-          return
-      log.apply this, arguments_
 
 
 module.exports = Application

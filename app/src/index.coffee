@@ -44,6 +44,12 @@ class MainCtrl
     @scope.openDirectory = @openDirectory
     @scope.getHtmlSafe = @getHtmlSafe
     @scope.setLocalPath = @setLocalPath
+
+    @scope.presets = [
+      presetName:'Salesforce'
+      url:'https.*\/resource(\/[0-9]+)?\/([A-Za-z0-9\-._]+\/)?'
+      ]
+
     @init()
 
   init: =>
@@ -59,9 +65,14 @@ class MainCtrl
       # @app.Storage.set resourceMap:@scope.resourceMap
       # chrome.app.window.current().close()-98
 
-  newMapping: () ->
-    @maps.push {}
+  newMapping: (item) ->
+    newItem = angular.copy(item)
+    @maps.push newItem
+    @openDirectory(newItem)
 
+  deleteMapping: (item) ->
+    idx = @maps.indexOf item
+    @maps.splice(idx, 1) if idx >= 0
 
   setLocalPath: (item) ->
     reg = new RegExp item.url
