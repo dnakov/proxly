@@ -22,38 +22,50 @@ class AppBackground extends Application
             @MSG.Ext obj
 
         @LISTEN.Ext 'resources', (result) =>
-            @Storage.save 'currentResources', result
+            @Storage.save 'currentResources', result, (saved) =>
+              @MSG.Ext 'redirInfo':
+                  matchingResources:@getMatchingResources()
+                  maps:@maps
+                  server:
+                      url:'http://' + @Server.host + ':' + @Server.port + '/slredir?'
 
-        @LISTEN.Local 'startServer', (results) =>
-            @Server.start results.host, results.port
-
-        @LISTEN.Local 'stopServer', () =>
-            @Server.stop()
-
-        @startServer()
-        try
-            chrome.app.runtime.onLaunched.addListener @openApp
-            chrome.app.runtime.onRestarted.addListener @cleanUp
-        catch error
-            show error
+        @LISTEN.Local 'startServer', () => @startServer()
+        @LISTEN.Ext 'startServer', () => @startServer()
+        @LISTEN.Local 'stopServer', () => @stopServer()
+        @LISTEN.Ext 'stopServer', () => @stopServer()
+        # @startServer()
+        # try
+        #     chrome.app.runtime.onRestarted.addListener @cleanUp
+        # catch error
+        #     show error
 
 
     cleanUp: () ->
         @stopServer()
 
-    getLocalFile: (info, cb, error) =>
+    getMatchingResources: () ->
+      matchingResources = []
+      for res in @data.currentResources
+        do (res) =>
+          for item in @maps when res.url.match(new RegExp(item.url))? and item.url?
+            do (item) =>
+              matchingResources.push res
+      return matchingResources
 
-        @findFileForQueryString info.url, success,
-            (error) =>
-                @findFileForPath info, cb, error
 
-    findFileForPath: (info, cb, error) =>
-        @findFileForQueryString info.url, cb, error, info.referer
+    getLocalFile: (info, success, error) =>
+
+        @findFileForQueryString info.uri, success,
+            (err) =>
+                @findFileForPath info, success, error
+
+    findFileForPath: (info, success, error) =>
+        @findFileForQueryString info.uri, success, error, info.referer
 
     findFileForQueryString: (_url, cb, error, referer) =>
         url = _url.replace /.*?slredir\=/, ''
 
-        match = item for item in @maps when url.match(new RegExp(item.url), item.regexRepl)? and item.url? and not match?
+        match = item for item in @maps when url.match(new RegExp(item.url))? and item.url? and not match?
 
         if match?
             if referer?
@@ -82,13 +94,20 @@ class AppBackground extends Application
             error()
 
 
-    startServer: () ->
-        @Server.start null,null,null, () =>
-            @MSG.Local 'server':@Server
+    startServer: (cb, err) ->
+        if @Server.stopped is true
+            @Server.start null,null,null, (socketInfo) =>
+                @MSG.Local 'server':@Server
+                @Notify "Server Started", "Started Server http://#{ @Server.host }:#{@Server.port}"
+            ,(error) =>
+                @Notify "Server Error","Error Starting Server: #{ error }"
 
     stopServer: () ->
-        @Server.stop()
-        @MSG.Local 'server':null
+        @Server.stop (success) =>
+            @Notify 'Server Stopped', "Server Stopped"
+            @MSG.Local 'server':null
+        ,(error) =>
+            @Notify "Server Error","Server could not be stopped: #{ error }"
 
 app = new AppBackground
 

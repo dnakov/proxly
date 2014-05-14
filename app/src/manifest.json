@@ -24,7 +24,7 @@
         ]},
 
   "management",
-
+"notifications",
 "webview", "<all_urls>",
         "file://*",
         "file:///*",

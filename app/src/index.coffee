@@ -67,7 +67,7 @@ class MainCtrl
       server:
         url:'http://' + @app.Server.host + ':' + @app.Server.port + '/slredir?'
       # @app.Storage.set resourceMap:@scope.resourceMap
-      # chrome.app.window.current().close()-98
+    chrome.app.window.current().close()
 
   newMapping: (item) ->
     newItem = angular.copy(item)

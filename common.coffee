@@ -17,6 +17,23 @@
       Function.prototype.apply.call(console.log, console, arguments)
 )()
 
+class Notification
+  show: (title, message) ->
+    uniqueId = (length=8) ->
+      id = ""
+      id += Math.random().toString(36).substr(2) while id.length < length
+      id.substr 0, length
+
+    chrome.notifications.create uniqueId(),
+      type:'basic'
+      title:title
+      message: message
+      iconUrl:'images/redir-on-38.png',
+      (callback) ->
+        undefined
+
+
+
 class MSG
   isContentScript: location.protocol isnt 'chrome-extension:'
   constructor: (config) ->
@@ -50,6 +67,7 @@ class LISTEN
     show "<== EXTERNAL MESSAGE == #{ @config.EXT_TYPE } ==" + request
     if sender.id isnt @config.EXT_ID then return undefined
     @external.listeners[key]? request[key], sendResponse for key of request
+    # sendResponse request[key] for key of request
 
   _onMessage: (request, sender, sendResponse) =>
     show "<== MESSAGE == #{ @config.EXT_TYPE } ==" + request
@@ -76,10 +94,11 @@ class Storage
     @retrieveAll()
     @onChangedAll()
 
-  save: (key, item) ->
+  save: (key, item, cb) ->
     obj = {}
     obj[key] = item
-    @api.set obj
+    @api.set obj, (res) ->
+      cb?()
 
   saveAll: () ->
     @api.set @data
@@ -209,7 +228,7 @@ class Server
   socket: chrome.socket
   # tcp: chrome.sockets.tcp
   host:"127.0.0.1"
-  port:8082
+  port:8085
   maxConnections:500
   socketProperties:
       persistent:true
@@ -217,44 +236,57 @@ class Server
   socketInfo:null
   getLocalFile:null
   socketIds:[]
-  stopped:false
+  stopped:true
 
   constructor: () ->
 
-  start: (host,port,maxConnections, cb) ->
+  start: (host,port,maxConnections, cb,err) ->
     @host = if host? then host else @host
     @port = if port? then port else @port
     @maxConnections = if maxConnections? then maxConnections else @maxConnections
 
-    @killAll () =>
+    @killAll (success) =>
       @socket.create 'tcp', {}, (socketInfo) =>
         @socketIds = []
         @socketIds.push socketInfo.socketId
         chrome.storage.local.set 'socketIds':@socketIds
         @socket.listen socketInfo.socketId, @host, @port, (result) =>
-          show 'listening ' + socketInfo.socketId
-          @stopped = false
-          @socketInfo = socketInfo
-          @socket.accept socketInfo.socketId, @_onAccept
+          if result > -1
+            show 'listening ' + socketInfo.socketId
+            @stopped = false
+            @socketInfo = socketInfo
+            @socket.accept socketInfo.socketId, @_onAccept
+            cb? socketInfo
+          else
+            err? result
+    ,err?
 
-  killAll: (callback) ->
+
+  killAll: (callback, error) ->
     chrome.storage.local.get 'socketIds', (result) =>
       show 'got ids'
       show result
       @socketIds = result.socketIds
-      for s in @socketIds?
+      cnt = 0
+      for s in @socketIds
         do (s) =>
-          try
-            @socket.disconnect s
-            @socket.destroy s
-            show 'killed ' + s
-          catch error
-            show "could not kill #{ s } because #{ error }"
-      callback?()
+          cnt++
+          @socket.getInfo s, (socketInfo) =>
+            cnt--
+            if not chrome.runtime.lastError?
+              @socket.disconnect s
+              @socket.destroy s
 
-  stop: () ->
-    @killAll()
-    @stopped = true
+            callback?() if cnt is 0
+
+
+  stop: (callback, error) ->
+    @killAll (success) =>
+      @stopped = true
+      callback?()
+    ,(error) =>
+      error? error
+
 
   _onReceive: (receiveInfo) =>
     show("Client socket 'receive' event: sd=" + receiveInfo.socketId
@@ -275,12 +307,14 @@ class Server
   _onAccept: (socketInfo) =>
     # return null if info.socketId isnt @serverSocketId
     show("Server socket 'accept' event: sd=" + socketInfo.socketId)
-    @_readFromSocket socketInfo.socketId, (info) =>
-      @getLocalFile info,
-        (fileEntry, fileReader) =>
-          @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive,
-        (error) =>
-          @_writeError socketInfo.socketId, 404, info.keepAlive
+    if socketInfo?.socketId?
+      @_readFromSocket socketInfo.socketId, (info) =>
+        @getLocalFile info, (fileEntry, fileReader) =>
+            @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive
+        ,(error) =>
+            @_writeError socketInfo.socketId, 404, info.keepAlive
+    else
+      show "No socket?!"
     # @socket.accept socketInfo.socketId, @_onAccept
 
 
@@ -296,7 +330,8 @@ class Server
     view
 
   arrayBufferToString: (buffer) ->
-    str = new Uint8Array(buffer)
+    str = ""
+    uArrayVal = new Uint8Array(buffer)
     s = 0
 
     while s < uArrayVal.length
@@ -392,8 +427,8 @@ class Server
 class Application
 
   config:
-    APP_ID: 'nfnmnnonddcblacejdenfhicalbkiiod'
-    EXTENSION_ID: 'bdjhbiogleankkadgoloihcbjalmndal'
+    APP_ID: 'cecifafpheghofpfdkhekkibcibhgfec'
+    EXTENSION_ID: 'dddimbnjibjcafboknbghehbfajgggep'
 
   data:null
   LISTEN: null
@@ -401,8 +436,10 @@ class Application
   Storage: null
   FS: null
   Server: null
+  Notify: null
 
   constructor: () ->
+    @Notify = (new Notification).show
     @Storage = new Storage
     @FS = new FileSystem
     @Server = new Server
@@ -415,22 +452,35 @@ class Application
     @appWindow = null
     @port = 31337
     @data = @Storage.data
+    @LISTEN.Ext 'openApp', @openApp
     @init()
 
   init: () =>
 
+  launchUI: (cb, error) ->
+    @launchApp (extInfo) =>
+      @openApp()
+      cb? extInfo
+    ,error
 
-  launchApp: (cb) ->
-    chrome.management.launchApp @config.APP_ID
+  launchApp: (cb, error, openUI) ->
+      chrome.management.launchApp @config.APP_ID, (extInfo) =>
+        if chrome.runtime.lastError
+          error chrome.runtime.lastError
+        else
+          cb? extInfo
 
   openApp: () =>
-    chrome.app.window.create('index.html',
-      id: "mainwin"
-      bounds:
-        width:500
-        height:800,
-    (win) =>
-      @appWindow = win)
+    if chrome.app?.window?
+      chrome.app.window.create('index.html',
+        id: "mainwin"
+        bounds:
+          width:500
+          height:800,
+      (win) =>
+        @appWindow = win)
+    else
+      @MSG.Ext 'openApp':true
 
 
 module.exports = Application
