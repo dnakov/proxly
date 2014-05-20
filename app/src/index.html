@@ -1,108 +1,246 @@
 <!doctype html>
 <html ng-csp>
 
-  <head>
+<head>
     <title>Redirector</title>
     <meta name="viewport" content="width=device-width">
     <link rel="stylesheet" href="styles/bootstrap.css">
+    <link rel="stylesheet" href="styles/bootstrap-theme.css">
     <link rel="stylesheet" href="styles/main.css">
-    <script type="text/javascript" src="styles/jquery.min.js"></script>
-    <script type="text/javascript" src="styles/bootstrap.min.js"></script>
+    <script type="text/javascript" src="scripts/jquery.min.js"></script>
+    <script type="text/javascript" src="scripts/bootstrap.min.js"></script>
 
-  </head>
+</head>
 
-  <body ng-controller="MainCtrl">
-
+<body ng-controller="MainCtrl" ng-cloak id="">
+  <div id="main-container">
     <div class="container-fluid">
+        <img src="images/icon-38.png" class="proxly-image" style="" />
+        <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a style="" href="#" class="navbar-brand">
+                        <span class="proxly-name">Proxly</span>
+                    </a>
 
-<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
-      </button>
-      <a ng-click="toggleServer()" style="" href="#" class="navbar-brand">
-        <span class="glyphicon glyphicon-off server-{{server.status}}"></span>&nbsp;&nbsp;&nbsp;&nbsp;<span>http://{{server.host}}:{{server.port}}/</span>
-      </a>
+
+                </div>
+
+<!--                 <form class="navbar-form navbar-left " role="search">
+                    <div class="form-group">
+                        <span class="proxly-host">http://{{server.host}}:</span>
+                        <input type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
+                        <button type="button" ng-click="changePort()" class="btn btn-sm btn-default">Save</button>
+                    </div>
+
+                </form> -->
+
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav nav">
+                        <li ng-click="navIsRedirect=false" class="{{navIsRedirect ? '' : 'active'}}"><a href="#">Server</a></li>
+                        <li ng-click="navIsRedirect=true" class="{{navIsRedirect ? 'active' : ''}}"><a href="#">Redirect</a></li>
+                    </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <button class="btn btn-danger navbar-btn" ng-click="save()">Close</button>
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+
+        </nav>
+
 
     </div>
+    <div class="main-content container-fluid">
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse">
-      <ul class="navbar-nav nav">
-        <li>
-        <div class="btn-group">
-          <button class="btn btn-success navbar-btn" type="button" id="" ng-click="newMapping()">New
-          </button>
-          <button class="btn btn-success dropdown-toggle navbar-btn" type="button" id="" data-toggle="dropdown">
+        <div ng-show="navIsRedirect==false" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
+                <div class="panel-body">
+                    <div class="input-group proxly-name">
+                        <div class="btn-group">
+                        <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('on', item)">On</button>
+                        <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('off', item)">Off</button>
+                        
+                        </div>
+                        <input type="text" id="projectName" class="proxly-input project-name" ng-model="item.name"></input>
+                        <span class="input-group-btn">
+                            <button class="btn btn-danger" ng-click="deleteDirectory(item)">Delete</button>
+                        </span>
+                    </div>
 
-            <span class="caret"></span>
-            <span class="sr-only">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu" role="menu" aria-labelledby="">
-            <li ng-click="newMapping(item)" ng-repeat="item in presets"><a href="#">{{item.presetName}}</a></li>
-          </ul>
+                    <div class="input-group proxly-folder">
+                    
+                        <span class="glyphicon glyphicon-folder-open"></span>
+                        <code>{{item.pathName}}</code>
+                        <span class="input-group-btn">
+                            <button class="btn btn-info" ng-click="openDirectory(item)">Browse</button>
+                        </span>
+                    </div>
+                </div>
         </div>
-      </li>
-      </ul>
+        <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
-      <ul class="nav navbar-nav navbar-right">
-        <li><button class="btn btn-success navbar-btn" ng-click="save()">Save &amp; Close</button></li>
+            <!-- <div class="panel-content"> -->
 
-      </ul>
-  </div>
-  </div><!-- /.container-fluid -->
-</nav>
+            <!-- <div class="row"> -->
+<!--             <input type="checkbox" class="proxly-switch">
+            <span class="label label-default">Project Name</span -->
+                <div class="panel-heading">
+                    <div class="input-group proxly-name">
+                        <div class="btn-group">
+                            <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button>
+                            <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button>
+                        </div>
+                        <input type="text" id="projectName" class="project-name" ng-model="item.name"></input>
+                        <span class="input-group-btn">
+                            <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
+                        </span>
+                    </div>
+                <!-- </div> -->
+            
+            <!-- </div> -->
+            <!-- <br/> -->
 
-      <div class="row">
+                <div class="row" ng-show="item.isRedirect == true">
+                    <div class="col-xs-6">
+                        <span class="label label-default">Match</span>
+                        <input ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+                    </div>
+                    <div class="col-xs-6">
+                        <span class="label label-default">Replace With</span>
+                        <input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
+                    </div>
+                </div>
 
-      <!-- <span class="iconic iconic-md iconic-cogs" title="gear" aria-hidden="true"></span> -->
+            <!-- </div> -->
+            <!-- <div class="panel-footer"> -->
+            <!-- <div class="row">
+                <div class="col-xs-6">
+                    <div class="btn-group">
+                        <button type="button" ng-click="item.isRedirect = true" class="btn btn-xs {{item.isRedirect ? 'btn-primary' : ''btn-default''}}">Redirect</button>
+                        <button ng-click="item.isRedirect = false" type="button" class="btn btn-xs {{item.isRedirect ? ''btn-default'' : 'btn-primary'}}">Host</button>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="row" ng-show="item.isRedirect == true">
+                <div class="col-xs-6">
+                    <span class="label label-default">Match</span>
+                    <input ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm proxly-input" />
+                </div>
+                <div class="col-xs-6">
+                    <span class="label label-default">Replace With</span>
+                    <input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm proxly-input" />
+                </div>
+            </div>
 
-
-
-
-      </div>
-          <div class="panel panel-default" ng-repeat="item in maps track by $index">
-
-            <div class="panel-content">
-              <h4>{{item.directory}}&nbsp;
-                <button class="btn btn-danger btn-xs pull-right" ng-click="deleteMapping(item)">Delete</button>
-                <button class="btn btn-xs pull-right btn-info" ng-click="openDirectory(item)">{{item.directory == null ? 'Add' : 'Change'}}</button>
-              </h4>
-
-          </div>
-        <div class="panel-footer">
-        <div class="row">
-          <div class="col-xs-6">
-            <span class="label label-default">Match</span><input ng-model="item.url" type="text" class="form-control">
-          </div>
-          <div class="col-xs-6">
-            <span class="label label-default">Replace With</span><input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control">
-          </div>
-          </div>
-        <br>
-        <div class="row"  ng-repeat="res in filteredResources = (currentResources | regex:'url':item.url)">
-
-          <div class="col-xs-1"><img class="iconic iconic-md" src="images/file-{{res.extension}}-md.svg"></div>
-          <div class="col-xs-11 resource-list">
-
-                <dl class="dl-horizontal">
-                <div></div>
-                <!-- <dd/> -->
-                  <dt>URL</dt>
-                  <dd><p ng-bind-html="res.url | highlight:item.url:caseSensitive">{{res.url}}</p></dd>
-                  <dt>Local</dt>
-                  <dd><p>{{res.localPath}}</p></dd>
-                </dl>
-          </div>
+            <!-- </div> -->            
         </div>
-
-        </div>
-      </div>
     </div>
 
-    <script src="bundles/index.bundle.js"></script>
-    <script src="styles/livereload.js"></script>
-  </body>
+    <div class="resource-footer" id="drop_zone">
+        <div class="container-fluid">
+            <div class="row" ng-repeat="res in filteredResources = (currentResources | regex:'url':currentFilter.url) track by $index">
+                <div class="col-xs-12 resource-list">
+
+                    <dl class="dl-horizontal">
+                        <div></div>
+                        <!-- <dd/> -->
+                        <dt>URL</dt>
+                        <dd>
+                            <p ng-bind-html="res.url | highlight:currentFilter.url:caseSensitive">{{res.url}}</p>
+                        </dd>
+                        <dt>Local</dt>
+                        <dd>
+                            <p>{{res.localPath}}</p>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div> 
+    </div>
+    <div class="container-fluid">
+        <img src="images/icon-38.png" class="proxly-image" style="" />
+        <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a style="" href="#" class="navbar-brand">
+                        <span class="proxly-name">http://{{server.host}}:{{server.port}}</span>
+                    </a>
+
+
+                </div>
+
+<!--                 <form class="navbar-form navbar-left " role="search">
+                    <div class="form-group">
+                        <span class="proxly-host">http://{{server.host}}:</span>
+                        <input type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
+                        <button type="button" ng-click="changePort()" class="btn btn-sm 'btn-default'">Save</button>
+                    </div>
+
+                </form> -->
+
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav nav">
+                        <li><input ng-disabled="server.isOn" type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
+                        <li>
+                            <div class="btn-group" >
+                              <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-success' : server.isOn, 'btn-default': server.isOn==false}">On</button>
+                              <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-default' : server.isOn, 'btn-danger': server.isOn==false}">Off</button>
+                            </div>
+                        </li>
+<!--                         <li>
+                            <div class="btn-group">
+                                <button class="btn btn-success navbar-btn" type="button" id="" ng-click="newMapping()">New
+                                </button>
+                                <button class="btn btn-success dropdown-toggle navbar-btn" type="button" id="" data-toggle="dropdown">
+
+                                    <span class="caret"></span>
+                                    <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="">
+                                    <li ng-click="newMapping(item)" ng-repeat="item in presets"><a href="#">{{item.presetName}}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li>
+                            <button class="btn btn-success navbar-btn" ng-click="refreshCurrentResources()">Reload Page Resources</button>
+                        </li> -->
+                    </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <button class="btn btn-success navbar-btn" type="button" id="" ng-click="newItem()">New
+                                </button>
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+
+        </nav>
+
+
+    </div>
+    <div class="dropper"><span class="glyphicon glyphicon-folder-open glyphicon-align-center"></span></div>
+    <script src="scripts/index.bundle.js"></script>
+    <script src="scripts/livereload.js"></script>
+</body>
 
 </html>

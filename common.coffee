@@ -1,486 +1,169 @@
-# http://stackoverflow.com/a/21742093
-(() ->
-  methods = [
-    'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
-    'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
-    'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
-    'timeStamp', 'trace', 'warn']
-  noop = () ->
-    # stub undefined methods.
-    for m in methods  when  !console[m]
-      console[m] = noop
-
-  if Function.prototype.bind?
-    window.show = Function.prototype.bind.call(console.log, console)
-  else
-    window.show = () ->
-      Function.prototype.apply.call(console.log, console, arguments)
-)()
-
-class Notification
-  show: (title, message) ->
-    uniqueId = (length=8) ->
-      id = ""
-      id += Math.random().toString(36).substr(2) while id.length < length
-      id.substr 0, length
-
-    chrome.notifications.create uniqueId(),
-      type:'basic'
-      title:title
-      message: message
-      iconUrl:'images/redir-on-38.png',
-      (callback) ->
-        undefined
-
-
-
-class MSG
-  isContentScript: location.protocol isnt 'chrome-extension:'
-  constructor: (config) ->
-    @config = config
-  Local: (message, respond) ->
-    show "== MESSAGE #{ JSON.stringify message } ==>"
-    chrome.runtime.sendMessage message, respond
-  Ext: (message, respond) ->
-    show "== MESSAGE #{ JSON.stringify message } ==>"
-    chrome.runtime.sendMessage @config.EXT_ID, message, respond
-
-class LISTEN
-  local:
-    api: chrome.runtime.onMessage
-    listeners:{}
-  external:
-    api: chrome.runtime.onMessageExternal
-    listeners:{}
-  constructor: (config) ->
-    @config = config
-    @local.api.addListener @_onMessage
-    @external.api?.addListener @_onMessageExternal
-
-  Local: (message, callback) =>
-    @local.listeners[message] = callback
-
-  Ext: (message, callback) =>
-    @external.listeners[message] = callback
-
-  _onMessageExternal: (request, sender, sendResponse) =>
-    show "<== EXTERNAL MESSAGE == #{ @config.EXT_TYPE } ==" + request
-    if sender.id isnt @config.EXT_ID then return undefined
-    @external.listeners[key]? request[key], sendResponse for key of request
-    # sendResponse request[key] for key of request
-
-  _onMessage: (request, sender, sendResponse) =>
-    show "<== MESSAGE == #{ @config.EXT_TYPE } ==" + request
-    @local.listeners[key]? request[key], sendResponse for key of request
-
-class Data
-  mapping:[
-    directory:null
-    urlPattern:null
-  ]
-  resources:[
-    resource:null
-    file:null
-  ]
-
-
-
-class Storage
-  api: chrome.storage.local
-  data: {}
-  callback: () ->
-  constructor: (callback) ->
-    @callback = callback
-    @retrieveAll()
-    @onChangedAll()
-
-  save: (key, item, cb) ->
-    obj = {}
-    obj[key] = item
-    @api.set obj, (res) ->
-      cb?()
-
-  saveAll: () ->
-    @api.set @data
-
-  retrieve: (key, cb) ->
-    @api.get key, (results) ->
-      @data[r] = results[r] for r of results
-      if cb? then cb results[key]
-
-
-  retrieveAll: (cb) ->
-    @api.get (result) =>
-      @data = result
-      @callback? result
-      cb? result
-      show result
-
-  onChanged: (key, cb) ->
-    chrome.storage.onChanged.addListener (changes, namespace) ->
-      if changes[key]? and cb? then cb changes[key].newValue
-      @callback? changes
-
-  onChangedAll: () ->
-    chrome.storage.onChanged.addListener (changes,namespace) =>
-      @data[c] = changes[c].newValue for c of changes
-      @callback? changes
-
-
-# class DirectoryStore
-#   directories =
-#   constructor () ->
-
-# class Directory
-
-
-class FileSystem
-  api: chrome.fileSystem
-
-  constructor: () ->
-
-  # @dirs: new DirectoryStore
-  # fileToArrayBuffer: (blob, onload, onerror) ->
-  #   reader = new FileReader()
-  #   reader.onload = onload
-
-  #   reader.onerror = onerror
-
-  #   reader.readAsArrayBuffer blob
-
-  readFile: (dirEntry, path, success, error) ->
-    @getFileEntry dirEntry, path,
-      (fileEntry) =>
-        fileEntry.file (file) =>
-          success(fileEntry, file)
-        ,(error) => error()
-      ,(error) => error()
-
-  getFileEntry: (dirEntry, path, success, error) ->
-    if dirEntry?.getFile?
-      dirEntry.getFile path, {}, (fileEntry) ->
-        success fileEntry
-    else error()
-
-  openDirectory: (callback) =>
-    @api.chooseEntry type:'openDirectory', (directoryEntry, files) =>
-      @api.getDisplayPath directoryEntry, (pathName) =>
-        dir =
-            relPath: directoryEntry.fullPath.replace('/' + directoryEntry.name, '')
-            directoryEntryId: @api.retainEntry(directoryEntry)
-            entry: directoryEntry
-
-          callback pathName, dir
-            # @getOneDirList dir
-            # Storage.save 'directories', @scope.directories (result) ->
-
-
-
-class Mapping
-  resource: null #http://blala.com/what/ever/index.js
-  local: null #/someshittyDir/otherShittyDir/
-  regex: null
-  constructor: (resource, local, regex) ->
-    [@local, @resource, @regex] = [local, resource, regex]
-
-  getLocalResource: () ->
-    @resource.replace(@regex, @local)
-
-  setRedirectDeclarative: (tabId) ->
-    rules = [].push
-      priority:100
-      conditions: [
-        new chrome.declarativeWebRequest.RequestMatcher
-          url:
-            urlMatches:@regex
-        ]
-      actions: [
-        new chrome.declarativeWebRequest.RedirectRequest
-          redirectUrl:@getLocalResource()
-      ]
-    chrome.declarativeWebRequest.onRequest.addRules rules
-
-# class StorageFactory
-#   makeObject: (type) ->
-#     switch type
-#       when 'ResourceList'
-#   _create: (type) ->
-#     @getFromStorage.then (obj) ->
-#       return obj
-
-#   getFromStorage: () ->
-#     promise = new Promise (success, fail) ->
-#       chrome.storage.local.get (a) ->
-#         b = new ResourceList
-#         for key of a
-#           do (a) ->
-#             b[key] = a[key]
-#         success b
-###
-class File
-    constructor: (directoryEntry, path) ->
-        @dirEntry = directoryEntry
-        @path = path
-###
-
-#TODO: rewrite this class using the new chrome.sockets.* api when you can manage to make it work
-class Server
-  socket: chrome.socket
-  # tcp: chrome.sockets.tcp
-  host:"127.0.0.1"
-  port:8085
-  maxConnections:500
-  socketProperties:
-      persistent:true
-      name:'SLRedirector'
-  socketInfo:null
-  getLocalFile:null
-  socketIds:[]
-  stopped:true
-
-  constructor: () ->
-
-  start: (host,port,maxConnections, cb,err) ->
-    @host = if host? then host else @host
-    @port = if port? then port else @port
-    @maxConnections = if maxConnections? then maxConnections else @maxConnections
-
-    @killAll (success) =>
-      @socket.create 'tcp', {}, (socketInfo) =>
-        @socketIds = []
-        @socketIds.push socketInfo.socketId
-        chrome.storage.local.set 'socketIds':@socketIds
-        @socket.listen socketInfo.socketId, @host, @port, (result) =>
-          if result > -1
-            show 'listening ' + socketInfo.socketId
-            @stopped = false
-            @socketInfo = socketInfo
-            @socket.accept socketInfo.socketId, @_onAccept
-            cb? socketInfo
-          else
-            err? result
-    ,err?
-
-
-  killAll: (callback, error) ->
-    chrome.storage.local.get 'socketIds', (result) =>
-      show 'got ids'
-      show result
-      @socketIds = result.socketIds
-      cnt = 0
-      for s in @socketIds
-        do (s) =>
-          cnt++
-          @socket.getInfo s, (socketInfo) =>
-            cnt--
-            if not chrome.runtime.lastError?
-              @socket.disconnect s
-              @socket.destroy s
-
-            callback?() if cnt is 0
-
-
-  stop: (callback, error) ->
-    @killAll (success) =>
-      @stopped = true
-      callback?()
-    ,(error) =>
-      error? error
-
-
-  _onReceive: (receiveInfo) =>
-    show("Client socket 'receive' event: sd=" + receiveInfo.socketId
-    + ", bytes=" + receiveInfo.data.byteLength)
-
-  _onListen: (serverSocketId, resultCode) =>
-    return show 'Error Listening: ' + chrome.runtime.lastError.message if resultCode < 0
-    @serverSocketId = serverSocketId
-    @tcpServer.onAccept.addListener @_onAccept
-    @tcpServer.onAcceptError.addListener @_onAcceptError
-    @tcp.onReceive.addListener @_onReceive
-    # show "["+socketInfo.peerAddress+":"+socketInfo.peerPort+"] Connection accepted!";
-    # info = @_readFromSocket socketInfo.socketId
-    # @getFile uri, (file) ->
-  _onAcceptError: (error) ->
-    show error
-
-  _onAccept: (socketInfo) =>
-    # return null if info.socketId isnt @serverSocketId
-    show("Server socket 'accept' event: sd=" + socketInfo.socketId)
-    if socketInfo?.socketId?
-      @_readFromSocket socketInfo.socketId, (info) =>
-        @getLocalFile info, (fileEntry, fileReader) =>
-            @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive
-        ,(error) =>
-            @_writeError socketInfo.socketId, 404, info.keepAlive
-    else
-      show "No socket?!"
-    # @socket.accept socketInfo.socketId, @_onAccept
-
-
-
-  stringToUint8Array: (string) ->
-    buffer = new ArrayBuffer(string.length)
-    view = new Uint8Array(buffer)
-    i = 0
-
-    while i < string.length
-      view[i] = string.charCodeAt(i)
-      i++
-    view
-
-  arrayBufferToString: (buffer) ->
-    str = ""
-    uArrayVal = new Uint8Array(buffer)
-    s = 0
-
-    while s < uArrayVal.length
-      str += String.fromCharCode(uArrayVal[s])
-      s++
-    str
-
-  _write200Response: (socketId, fileEntry, file, keepAlive) ->
-    contentType = (if (file.type is "") then "text/plain" else file.type)
-    contentLength = file.size
-    header = @stringToUint8Array("HTTP/1.0 200 OK\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
-    outputBuffer = new ArrayBuffer(header.byteLength + file.size)
-    view = new Uint8Array(outputBuffer)
-    view.set header, 0
-
-    reader = new FileReader
-    reader.onload = (ev) =>
-      view.set new Uint8Array(ev.target.result), header.byteLength
-      @socket.write socketId, outputBuffer, (writeInfo) =>
-        show writeInfo
-        # @_readFromSocket socketId
-        @end socketId, keepAlive
-    reader.onerror = (error) =>
-      @end socketId, keepAlive
-    reader.readAsArrayBuffer file
-
-
-    # @end socketId
-    # fileReader = new FileReader()
-    # fileReader.onload = (e) =>
-    #   view.set new Uint8Array(e.target.result), header.byteLength
-    #   @socket.write socketId, outputBuffer, (writeInfo) =>
-    #     show "WRITE", writeInfo
-    #       @_write200Response socketId
-
-
-  _readFromSocket: (socketId, cb) ->
-    @socket.read socketId, (readInfo) =>
-      show "READ", readInfo
-
-      # Parse the request.
-      data = @arrayBufferToString(readInfo.data)
-      show data
-
-      if data.indexOf("GET ") isnt 0
-        @end socketId
-        return
-
-      keepAlive = false
-      keepAlive = true if data.indexOf 'Connection: keep-alive' isnt -1
-
-      uriEnd = data.indexOf(" ", 4)
-
-      return end socketId if uriEnd < 0
-
-      uri = data.substring(4, uriEnd)
-      if not uri?
-        writeError socketId, 404, keepAlive
-        return
-
-      info =
-        uri: uri
-        keepAlive:keepAlive
-      info.referer = data.match(/Referer:\s(.*)/)?[1]
-      #success
-      cb? info
-
-  end: (socketId, keepAlive) ->
-      # if keepAlive
-      #   @_readFromSocket socketId
-      # else
-    @socket.disconnect socketId
-    @socket.destroy socketId
-    show 'ending ' + socketId
-    @socket.accept @socketInfo.socketId, @_onAccept
-
-  _writeError: (socketId, errorCode, keepAlive) ->
-    file = size: 0
-    console.info "writeErrorResponse:: begin... "
-    console.info "writeErrorResponse:: file = " + file
-    contentType = "text/plain" #(file.type === "") ? "text/plain" : file.type;
-    contentLength = file.size
-    header = @stringToUint8Array("HTTP/1.0 " + errorCode + " Not Found\nContent-length: " + file.size + "\nContent-type:" + contentType + ((if keepAlive then "\nConnection: keep-alive" else "")) + "\n\n")
-    console.info "writeErrorResponse:: Done setting header..."
-    outputBuffer = new ArrayBuffer(header.byteLength + file.size)
-    view = new Uint8Array(outputBuffer)
-    view.set header, 0
-    console.info "writeErrorResponse:: Done setting view..."
-    @socket.write socketId, outputBuffer, (writeInfo) =>
-      show "WRITE", writeInfo
-      @end socketId, keepAlive
-
-class Application
-
-  config:
-    APP_ID: 'cecifafpheghofpfdkhekkibcibhgfec'
-    EXTENSION_ID: 'dddimbnjibjcafboknbghehbfajgggep'
-
-  data:null
+require './util.coffee'
+Config = require './config.coffee'
+MSG = require './msg.coffee'
+LISTEN = require './listen.coffee'
+Storage = require './storage.coffee'
+FileSystem = require './filesystem.coffee'
+Notification = require './notification.coffee'
+Server = require './server.coffee'
+
+
+class Application extends Config
   LISTEN: null
   MSG: null
   Storage: null
   FS: null
   Server: null
   Notify: null
+  platform:null
+  currentTabId:null
 
-  constructor: () ->
-    @Notify = (new Notification).show
-    @Storage = new Storage
-    @FS = new FileSystem
-    @Server = new Server
-    @config.SELF_ID = chrome.runtime.id
-    @config.EXT_ID = if @config.APP_ID is @config.SELF_ID then @config.EXTENSION_ID else @config.APP_ID
-    @config.EXT_TYPE = if @config.APP_ID isnt @config.SELF_ID then 'EXTENSION' else 'APP'
-    @MSG = new MSG @config
-    @LISTEN = new LISTEN @config
+  constructor: (deps) ->
+    super
 
-    @appWindow = null
-    @port = 31337
+    @MSG ?= MSG.get()
+    @LISTEN ?= LISTEN.get()
+    
+    for prop of deps
+      if typeof deps[prop] is "object" 
+        @[prop] = @wrapObjInbound deps[prop]
+      if typeof deps[prop] is "function" 
+        @[prop] = @wrapObjOutbound new deps[prop]
+
+    @Notify ?= (new Notification).show 
+    # @Storage ?= @wrapObjOutbound new Storage @data
+    # @FS = new FileSystem 
+    # @Server ?= @wrapObjOutbound new Server
     @data = @Storage.data
-    @LISTEN.Ext 'openApp', @openApp
+    
+    @wrap = if @SELF_TYPE is 'APP' then @wrapInbound else @wrapOutbound
+
+    @openApp = @wrap @, 'Application.openApp', @openApp
+    @launchApp = @wrap @, 'Application.launchApp', @launchApp
+    @startServer = @wrap @, 'Application.startServer', @startServer
+    @restartServer = @wrap @, 'Application.restartServer', @restartServer
+    @stopServer = @wrap @, 'Application.stopServer', @stopServer
+    
+
+    @wrap = if @SELF_TYPE is 'EXTENSION' then @wrapInbound else @wrapOutbound
+
+    @getResources = @wrap @, 'Application.getResources', @getResources
+    @getCurrentTab = @wrap @, 'Application.getCurrentTab', @getCurrentTab
+
+    chrome.runtime.getPlatformInfo (info) =>
+      @platform = info
+
     @init()
 
-  init: () =>
+  init: () ->
+    @data.server =
+      host:"127.0.0.1"
+      port:8089
+      isOn:false
 
-  launchUI: (cb, error) ->
-    @launchApp (extInfo) =>
-      @openApp()
-      cb? extInfo
-    ,error
+  getCurrentTab: (cb) ->
+    # tried to keep only activeTab permission, but oh well..
+    chrome.tabs.query
+      active:true
+      currentWindow:true
+    ,(tabs) =>
+      @currentTabId = tabs[0].id
+      cb? @currentTabId
 
-  launchApp: (cb, error, openUI) ->
-      chrome.management.launchApp @config.APP_ID, (extInfo) =>
+  launchApp: (cb, error) ->
+      chrome.management.launchApp @APP_ID, (extInfo) =>
         if chrome.runtime.lastError
           error chrome.runtime.lastError
         else
           cb? extInfo
 
   openApp: () =>
-    if chrome.app?.window?
       chrome.app.window.create('index.html',
         id: "mainwin"
         bounds:
-          width:500
+          width:770
           height:800,
       (win) =>
-        @appWindow = win)
+        @appWindow = win) 
+
+  getCurrentTab: (cb) ->
+    # tried to keep only activeTab permission, but oh well..
+    chrome.tabs.query
+      active:true
+      currentWindow:true
+    ,(tabs) =>
+      @currentTabId = tabs[0].id
+      cb? @currentTabId
+
+  getResources: (cb) ->
+    @getCurrentTab (tabId) =>
+      chrome.tabs.executeScript tabId, 
+        file:'scripts/content.js', (results) =>
+          @data.currentResources = results
+          cb?()
+
+  # updateResourcesListener: (resources) =>
+  #     show resources
+  #     _resources = []
+
+  #     for frame in resources 
+  #       do (frame) =>
+  #         for item in frame 
+  #           do (item) =>
+  #             _resources.push item
+  #     @Storage.save 'currentResources', resources
+  getLocalFile: (info, cb, err) =>
+    url = info.uri
+    filePath = url
+    dirName = info.uri
+
+    dirName = dirName.match(/(\/.*?\/)|(\\.*?\\)/)?[0] || ''
+    dirName = dirName.substring 0, dirName.length - 1
+    show 'looking for ' + dirName
+    _maps = {}
+    _maps[item.directory] = item.isOn for item in @data.maps
+
+    for k, dir of @data.directories when _maps[k]
+      show 'in loop' + dir.relPath
+      if dir.relPath is dirName then foundDir = dir
+
+    if foundDir?
+      show 'found! ' + foundDir
+      @FS.getLocalFile foundDir, filePath, cb, err
     else
-      @MSG.Ext 'openApp':true
+      show 'dunno, not found'
+      err()
+
+  startServer: (cb, err) ->
+      if @Server.stopped is true
+          @Server.start @data.server.host,@data.server.port,null, (socketInfo) =>
+              @data.server.url = 'http://' + @data.server.host + ':' + @data.server.port + '/'
+              @data.server.isOn = true
+              @Notify "Server Started", "Started Server http://#{ @data.server.host }:#{@data.server.port}"
+              cb?()
+          ,(error) =>
+              @Notify "Server Error","Error Starting Server: #{ error }"
+              @data.server.url = 'http://' + @data.server.host + ':' + @data.server.port + '/'
+              @data.server.isOn = true
+              err?()
+
+  stopServer: (cb, err) ->
+      @Server.stop (success) =>
+          @Notify 'Server Stopped', "Server Stopped"
+          @data.server.url = ''
+          @data.server.isOn = false
+          cb?()
+      ,(error) =>
+          err?()
+          @Notify "Server Error","Server could not be stopped: #{ error }"
+
+  restartServer: ->
+    @stopServer () =>
+      @startServer()
+
+  changePort: =>
 
 
 module.exports = Application
+
+

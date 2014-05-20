@@ -7,19 +7,40 @@
   "license": "ISC",
   "dependencies": {
     "angular": "^1.2.16",
-    "browserify": "^3.46.1"
+    "browserify": "^3.46.1",
+    "observed": "^1.0.0",
+    "browserify-shim": "^3.5.0"
+  },
+  "browser": {
+    "jquery": "./js/vendor/jquery.js"
+  },
+  "browserify-shim": {
+    "jquery": "$"
+  },
+  "browserify": {
+    "transform": [ "browserify-shim" ]
   },
   "devDependencies": {
     "angular-sanitize": "0.0.1",
     "coffeeify": "^0.6.0",
-    "watchify": "^0.9.0"
+    "crx": "^0.4.2",
+    "gulp": "^3.6.2",
+    "gulp-clean": "^0.2.4",
+    "gulp-cleanhtml": "0.0.2",
+    "gulp-jshint": "^1.6.1",
+    "gulp-minify-css": "^0.3.4",
+    "gulp-strip-debug": "^0.3.0",
+    "gulp-uglify": "^0.3.0",
+    "gulp-zip": "^0.3.4",
+    "watchify": "^0.9.0",
+    "yargs": "^1.2.2"
   },
   "scripts": {
-    "build-app": "browserify -t coffeeify app/src/background.coffee -d > app/src/bundles/background.bundle.js & browserify -t coffeeify -d app/src/index.coffee > app/src/bundles/index.bundle.js",
-    "build-extension": "browserify -t coffeeify extension/src/background.coffee -d > extension/src/bundles/background.bundle.js & browserify -t coffeeify -d extension/src/content.coffee > extension/src/bundles/content.bundle.js",
+    "build-app": "browserify -t coffeeify app/src/background.coffee -d > app/src/scripts/background.bundle.js & browserify -t coffeeify -d app/src/index.coffee > app/src/scripts/index.bundle.js",
+    "build-extension": "browserify -t coffeeify extension/src/background.coffee -d > extension/src/scripts/background.bundle.js & coffee -c -o extension/src/scripts extension/src/content.coffee & browserify -t coffeeify -d extension/src/popup.coffee > extension/src/scripts/popup.bundle.js",
     "build": "npm run build-app && npm run build-extension",
-    "watch-app": "watchify -t coffeeify app/src/background.coffee -o app/src/bundles/background.bundle.js -dv & watchify -t coffeeify app/src/index.coffee -o app/src/bundles/index.bundle.js -dv",
-    "watch-extension": "watchify -t coffeeify extension/src/background.coffee -o extension/src/bundles/background.bundle.js -dv & watchify -t coffeeify extension/src/content.coffee -o extension/src/bundles/content.bundle.js -dv",
+    "watch-app": "watchify -t coffeeify app/src/background.coffee -o app/src/scripts/background.bundle.js -dv & watchify -t coffeeify app/src/index.coffee -o app/src/scripts/index.bundle.js -dv",
+    "watch-extension": "watchify -t coffeeify extension/src/background.coffee -o extension/src/scripts/background.bundle.js -dv & coffee -c -w -o extension/src/scripts extension/src/content.coffee & watchify -t coffeeify extension/src/popup.coffee -o extension/src/scripts/popup.bundle.js -dv",
     "watch": "npm run watch-app & npm run watch-extension",
     "test": "echo \"Error: no test specified\" && exit 1"
   }

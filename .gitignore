@@ -1,5 +1,5 @@
 # Created by http://www.gitignore.io
-
+.keys/
 ### SublimeText ###
 # workspace files are user-specific
 *.sublime-workspace
