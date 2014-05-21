@@ -10,6 +10,7 @@ class Storage
   data: 
     currentResources: []
   callback: () ->
+  notifyOnChange: () ->
   constructor: () ->
     @observer = Observable @data
     @observer.on 'change', (change) =>

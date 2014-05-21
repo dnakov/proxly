@@ -31,10 +31,11 @@ class LISTEN extends Config
 
   _onMessageExternal: (request, sender, sendResponse) =>
     responseStatus = called:false
-    _sendResponse = ->
+
+    _sendResponse = (whatever...) =>
       try
-        show 'calling sendresponse'
-        sendResponse.apply null,arguments
+        whatever.shift() if whatever[0] is null 
+        sendResponse.apply null,whatever
       catch e
         undefined # error because no response was requested from the MSG, don't care
       responseStatus.called = true

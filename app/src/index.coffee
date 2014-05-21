@@ -97,6 +97,7 @@ class MainCtrl
     @scope.newItem = @newItem
     @scope.currentFileMatches = @data.currentFileMatches
 
+
     $document.on 'dragenter', @onDrop
 
     # @app.Storage.retrieveAll () =>
@@ -109,17 +110,17 @@ class MainCtrl
       ]
 
     @scope.navIsRedirect=false
-
+    @scope.showResources=false
 
     @init()
 
   init: ->
-    @loadCurrentResources()
+    
 
   onDrop: (event) =>
     entry = event.items[0]?.webkitGetAsEntry?()
     return unless entry?.isDirectory
-    @app.FS.openDirectory entry, (pathName, dir) =>
+    @app.FS.openDirectory entry, (err, pathName, dir) =>
       dir.name = pathName.match(/[^\/]+$/)?[0]
       delete dir.entry
       dir.pathName = pathName
@@ -127,20 +128,18 @@ class MainCtrl
       @data.directories.unshift dir
       @scope.$apply()
 
-
-  loadCurrentResources: () ->
-    @app.getResources()
-
   save: (close) =>
     @app.Storage.saveAllAndSync()
     chrome.app.window.current().close() if close
       # @app.Storage.set resourceMap:@scope.resourceMap
 
   refreshCurrentResources: () =>
-    @loadCurrentResources()
+    @app.getResources (currentResources) =>
+      @scope.currentResources = @data.currentResources = currentResources
+      @scope.$apply()
 
   newDirectory: () =>
-    @openDirectory (pathName, dir) =>
+    @openDirectory (err, pathName, dir) =>
       @scope.$apply()
 
   newMapping: (item) =>
@@ -173,7 +172,7 @@ class MainCtrl
       resource.localPath = resource.url.replace(reg, item.regexRepl)
       _dirs = [] 
       _dirs.push dir for dir in @scope.directories when dir.isOn
-      @app.findLocalFilePathForURL resource.url, (fileMatch, directory) => 
+      @app.findLocalFilePathForURL resource.url, (err, fileMatch, directory) => 
         for res in @scope.filteredResources when res.localPath is fileMatch.filePath
           res.localFile = directory.pathName + '/' + res.localPath
         @scope.$apply()
@@ -182,7 +181,7 @@ class MainCtrl
   openDirectory: (cb) =>
     # @app.FS.openDirectory (pathName, dir) =>
     chrome.fileSystem.chooseEntry type:'openDirectory', (directoryEntry, files) =>
-      @app.FS.openDirectory directoryEntry, (pathName, dir) =>
+      @app.FS.openDirectory directoryEntry, (err, pathName, dir) =>
         dir.name = pathName.match(/[^\/]+$/)?[0]
         dir.pathName = pathName    
         dir.isOn = true    
@@ -297,8 +296,27 @@ chrome.runtime.getBackgroundPage (win) ->
 
   ngapp = angular.module 'redir', ['ngSanitize', 'ui.highlight','ngAnimate']
 
+ 
+
+  ngapp.directive 'flipSwitch', () ->
+    restrict:'AE',
+    scope:
+      _model:'=boolModel',
+      id:"@identifier"
+    template:'''
+    <div class="onoffswitch">
+      <input type="checkbox" name="onoffswitch" id="{{id}}" class="onoffswitch-checkbox" ng-model="_model">
+      <label class="onoffswitch-label" for="{{id}}">
+          <span class="onoffswitch-inner"></span>
+          <span class="onoffswitch-switch"></span>
+      </label>
+    </div>
+    '''
+    replace:true
   MainCtrl.$inject = ["$scope", "$filter", "$sce", "$document"]
+
   ngapp.controller 'MainCtrl', MainCtrl
+  
 
   ngRegex = ngapp.filter "regex", ->
     (input, field, regex) ->

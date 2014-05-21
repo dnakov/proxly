@@ -15,16 +15,23 @@ class Config
 
   wrapInbound: (obj, fname, f) ->
       _klas = obj
-      @LISTEN.Ext fname, (callback) ->
-        _callback = callback
-        _arguments = Array.prototype.slice.call(arguments)
-        args = []
-        if _arguments.length is 0 or not _arguments[0]?
-          args.push null
-        else
-          args = _arguments
+      @LISTEN.Ext fname, (args) ->
+        if args?.isProxy
+          if typeof arguments[1] is "function"
+            if args.arguments?.length >= 0
+              return f.apply _klas, args.arguments.concat arguments[1] 
+            else
+              return f.apply _klas, [null].concat arguments[1]
+        
+        return f.apply _klas, arguments
+
+        # args = []
+        # if args.arguments?.length is 0
+        #   args.push null
+        # else
+        #   args = _arguments
         # _args = args[0]?.push(args[1])
-        f.apply _klas, args
+        #f.apply _klas, args
 
   wrapObjInbound: (obj) ->
     (obj[key] = @wrapInbound obj, obj.constructor.name + '.' + key, obj[key]) for key of obj when typeof obj[key] is "function"
@@ -33,18 +40,22 @@ class Config
   wrapOutbound: (obj, fname, f) ->
     ->
       msg = {}
+      msg[fname] = 
+        isProxy:true
+        arguments:Array.prototype.slice.call arguments
+      msg[fname].isProxy = true
       _args = Array.prototype.slice.call arguments
 
       if _args.length is 0
-        msg[fname] = null 
-        return @MSG.Ext msg
+        msg[fname].arguments = undefined 
+        return @MSG.Ext msg, () -> undefined
 
-      msg[fname] = _args
+      msg[fname].arguments = _args
 
-      callback = msg[fname].pop()
+      callback = msg[fname].arguments.pop()
       if typeof callback isnt "function"
-        msg[fname].push callback
-        @MSG.Ext msg
+        msg[fname].arguments.push callback
+        @MSG.Ext msg, () -> undefined
       else
         @MSG.Ext msg, callback 
 

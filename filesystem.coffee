@@ -19,18 +19,18 @@ class FileSystem
 
   readFile: (dirEntry, path, cb) ->
     @getFileEntry dirEntry, path,
-      (fileEntry) =>
+      (err, fileEntry) =>
+        
+        if err? then cb? err
+
         fileEntry.file (file) =>
-          cb? null, fileEntry, file)
+          cb? null, fileEntry, file
         ,(err) => cb? err
-      ,(err) => cb? err
 
   getFileEntry: (dirEntry, path, cb) ->
-    if dirEntry?.getFile?
-      dirEntry.getFile path, {}, (fileEntry) ->
+      dirEntry.getFile path, {}, (fileEntry) =>
         cb? null, fileEntry
       ,(err) => cb? err
-    else cb? err
 
   # openDirectory: (callback) ->
   openDirectory: (directoryEntry, cb) ->
@@ -40,17 +40,16 @@ class FileSystem
           relPath: directoryEntry.fullPath #.replace('/' + directoryEntry.name, '')
           directoryEntryId: @api.retainEntry(directoryEntry)
           entry: directoryEntry
-
-        cb null, pathName, dir
+      cb? null, pathName, dir
           # @getOneDirList dir
           # Storage.save 'directories', @scope.directories (result) ->
 
   getLocalFileEntry: (dir, filePath, cb) => 
     chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
       @getFileEntry dirEntry, filePath,
-      (fileEntry) =>
-        cb? null, fileEntry
-      ,(err) => cb? err
+        (err, fileEntry) =>
+          if err? then cb? err 
+          cb? null, fileEntry
 
   getLocalFile: (dir, filePath, cb, error) => 
   # if @retainedDirs[dir.directoryEntryId]?
@@ -62,11 +61,10 @@ class FileSystem
   # else
     chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
       # @retainedDirs[dir.directoryEntryId] = dirEntry
-      @readFile dirEntry, filePath,
-          (fileEntry, file) =>
-              cb? null, fileEntry, file
-          ,(_error) => cb?(_error)
-      ,(_error) => cb?(_error)
+      @readFile dirEntry, filePath, (err, fileEntry, file) =>
+        if err? then cb? err
+        cb? null, fileEntry, file
+    ,(_error) => cb?(_error)
 
       # @findFileForQueryString info.uri, success,
       #     (err) =>

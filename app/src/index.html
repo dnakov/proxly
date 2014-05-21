@@ -66,13 +66,14 @@
                 <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="btn-group">
-                        <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('on', item)">On</button>
-                        <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('off', item)">Off</button>
+                        <flip-switch bool-model="item.isOn" identifier="dir-{{$index}}"/>
+                        <!-- <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('on', item)">On</button> -->
+                        <!-- <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('off', item)">Off</button> -->
                         
                         </div>
                         <input type="text" id="projectName" class="proxly-input project-name" ng-model="item.name"></input>
                         <span class="input-group-btn">
-                            <button class="btn btn-danger" ng-click="deleteDirectory(item)">Delete</button>
+                            <button class="btn btn-danger" ng-click="deleteDirectory(item)">&nbsp;Delete&nbsp;</button>
                         </span>
                     </div>
 
@@ -88,13 +89,14 @@
         </div>
         <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
-                <div class="panel-heading">
+                <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="btn-group">
-                            <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button>
-                            <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button>
+                            <flip-switch bool-model="item.isOn" identifier="redir-{{$index}}"/>
+                            <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
+                            <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
                         </div>
-                        <input type="text" id="projectName" class="project-name" ng-model="item.name"></input>
+                        <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name"></input>
                         <span class="input-group-btn">
                             <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
                         </span>
@@ -104,47 +106,21 @@
                 <div class="row" ng-show="item.isRedirect == true">
                     <div class="col-xs-6">
                         <span class="label label-default">Match</span>
-                        <input ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
                     </div>
                     <div class="col-xs-6">
                         <span class="label label-default">Replace With</span>
-                        <input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
+                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
                     </div>
                 </div>       
-                <div class="resource-footer" id="drop_zone">
-                    <div class="container-fluid">
-                        <div class="row" ng-repeat="res in $parent.filteredResources = (currentResources | regex:'url':$parent.currentFilter.url) track by $index">
-                            <div class="col-xs-12 resource-list">
-                                <dl class="dl-horizontal">
-                                    <div></div>
-                                    <!-- <dd/> -->
-                                    <dt>URL</dt>
-                                    <dd>
-                                        <p ng-bind-html="res.url | highlight:$parent.currentFilter.url:caseSensitive">{{res.url}}</p>
-                                    </dd>
-                                    <dt>Redirect</dt>
-                                    <dd>
-                                        <p>http://{{server.host}}:{{server.port}}/{{res.localPath}}</p>
-                                    </dd>
-                                    <dt>File</dt>
-                                    <dd>
-                                        <p>{{res.localFile}}
-                                        </p>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div> 
-
         </div>
     </div>
 
 
     
-    <div class="container-fluid">
-        <img src="images/icon-38.png" class="proxly-image" style="" />
-        <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom" role="navigation">
+
+
+        <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom resources-nav res-show" ng-show="showResources" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
@@ -171,12 +147,20 @@
 
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav nav">
-                        <li><input ng-disabled="server.isOn" type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
+                        <li><input ng-disabled="server.isOn" identifier="server" type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
                         <li>
                             <div class="btn-group" >
-                              <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-success' : server.isOn, 'btn-default': server.isOn==false}">On</button>
-                              <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-default' : server.isOn, 'btn-danger': server.isOn==false}">Off</button>
+                            <flip-switch bool-model="server.isOn" ng-click="toggleServer()" identifier="server"/>
+                                <!-- <input type="checkbox" ng-model="server.isOn" class="onoffswitch"> -->
+                              <!-- <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-success' : server.isOn, 'btn-default': server.isOn==false}">On</button> -->
+                              <!-- <button type="button" ng-click="toggleServer()" class="btn" ng-class="{'btn-default' : server.isOn, 'btn-danger': server.isOn==false}">Off</button> -->
                             </div>
+                        </li>
+                        <li>
+                            <a ng-hide="currentResources==undefined || currentResources.length == 0" href="" ng-click="showResources=!showResources" class="pull-right">{{showResources ? 'Hide' : 'Show'}} Resources ({{currentResources.length}})  </a>
+                        </li>
+                        <li>
+                            <a class="pull-right" ><span ng-click="refreshCurrentResources()" class="glyphicon glyphicon-repeat"></span></a>
                         </li>
 <!--                         <li>
                             <div class="btn-group">
@@ -207,12 +191,37 @@
 
                 </div>
             </div>
-
+            <div class="resource-footer">
+                    <div class="container-fluid">
+                        <div class="row" ng-repeat="res in $parent.filteredResources = (currentResources | regex:'url':$parent.currentFilter.url) track by $index">
+                            <div class="col-xs-12 resource-list">
+                                <dl class="dl-horizontal">
+                                    <div></div>
+                                    <!-- <dd/> -->
+                                    <dt>URL</dt>
+                                    <dd>
+                                        <span ng-bind-html="res.url | highlight:$parent.currentFilter.url:caseSensitive">{{res.url}}</span>
+                                    </dd>
+                                    <dt>Redirect</dt>
+                                    <dd>
+                                        <span>http://{{server.host}}:{{server.port}}/{{res.localPath}}</span>
+                                    </dd>
+                                    <dt>File</dt>
+                                    <dd>
+                                        <span>{{res.localFile}}
+                                        </span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
         </nav>
+        
 
 
     </div>
-    </div>
+                
     <div class="dropper"><span class="glyphicon glyphicon-folder-open glyphicon-align-center"></span></div>
     <script src="scripts/index.bundle.js"></script>
     <script src="scripts/livereload.js"></script>

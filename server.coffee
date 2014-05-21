@@ -84,11 +84,13 @@ class Server
     # return null if info.socketId isnt @serverSocketId
     show("Server socket 'accept' event: sd=" + socketInfo.socketId)
     if socketInfo?.socketId?
-      @_readFromSocket socketInfo.socketId, (info) =>
-        @getLocalFile info, (fileEntry, fileReader) =>
-            @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive
-        ,(error) =>
-            @_writeError socketInfo.socketId, 404, info.keepAlive
+      @_readFromSocket socketInfo.socketId, (err, info) =>
+        
+        if err? then return @_writeError socketInfo.socketId, 404, info.keepAlive
+
+        @getLocalFile info, (err, fileEntry, fileReader) =>
+          if err? then @_writeError socketInfo.socketId, 404, info.keepAlive
+          else @_write200Response socketInfo.socketId, fileEntry, fileReader, info.keepAlive
     else
       show "No socket?!"
     # @socket.accept socketInfo.socketId, @_onAccept
@@ -153,8 +155,7 @@ class Server
       show data
 
       if data.indexOf("GET ") isnt 0
-        @end socketId
-        return
+        return cb? '404'
 
       keepAlive = false
       keepAlive = true if data.indexOf 'Connection: keep-alive' isnt -1
@@ -165,15 +166,14 @@ class Server
 
       uri = data.substring(4, uriEnd)
       if not uri?
-        writeError socketId, 404, keepAlive
-        return
+        return cb? '404'
 
       info =
         uri: uri
         keepAlive:keepAlive
       info.referer = data.match(/Referer:\s(.*)/)?[1]
       #success
-      cb? info
+      cb? null, info
 
   end: (socketId, keepAlive) ->
       # if keepAlive

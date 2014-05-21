@@ -103,7 +103,7 @@ class Application extends Config
           for r in results
             for res in r
               @data.currentResources.push res
-          cb?()
+          cb? null, @data.currentResources
 
   # updateResourcesListener: (resources) =>
   #     show resources
@@ -115,15 +115,16 @@ class Application extends Config
   #           do (item) =>
   #             _resources.push item
   #     @Storage.save 'currentResources', resources
-  getLocalFile: (info, cb, err) =>
+  getLocalFile: (info, cb) =>
     url = info.uri
     filePath = @getLocalFilePath url
     fileEntryId = @data.currentFileMatches[filePath].fileEntry
     if fileEntryId?
       chrome.fileSystem.restoreEntry fileEntryId, (fileEntry) =>
         fileEntry.file (file) =>
-          cb?(fileEntry,file)
-        ,err
+          cb? null,fileEntry,file
+        ,(err) => cb? err
+
     # dirName = info.uri
 
     # dirName = dirName.match(/(\/.*?\/)|(\\.*?\\)/)?[0] || ''
@@ -197,19 +198,22 @@ class Application extends Config
   findLocalFilePathForURL: (url, cb) ->
     filePath = @getLocalFilePath url
     return unless filePath?
-    @findFileInDirectories @data.directories, filePath, (fileEntry, directory) =>
-    # return redirectUrl: @prefix + filePath
+    @findFileInDirectories @data.directories, filePath, (err, fileEntry, directory) =>
+
+      if err? 
+        show 'no files found for ' + filePath
+        return cb? err
+
       delete fileEntry.entry
       @data.currentFileMatches[filePath] = 
         fileEntry: chrome.fileSystem.retainEntry fileEntry
         filePath: filePath
         directory: directory
       cb?(@data.currentFileMatches[filePath], directory)
-    ,(err) =>
-      show 'no files found for ' + filePath
+      
 
 
-  findFileInDirectories: (directories, path, cb, err) ->
+  findFileInDirectories: (directories, path, cb) ->
     allDirs = directories.slice() unless allDirs?
     err() if directories is undefined or path is undefined
     _dirs = allDirs.slice()
@@ -223,21 +227,23 @@ class Application extends Config
         dir = _dirs.shift() 
 
       @FS.getLocalFileEntry dir, _path, 
-        (fileEntry) =>
-          cb? fileEntry, dir
-        ,(error) =>
-          @findFileInDirectories _dirs, _path, cb, err  
+        (err, fileEntry) =>
+          if err?
+            @findFileInDirectories _dirs, _path, cb, err 
+
+          cb? null, fileEntry, dir
     else
       @FS.getLocalFileEntry dir, _path, 
         (fileEntry) =>
-          cb? fileEntry, dir
-        ,err
+          if err? then cb? err
+
+          cb? null, fileEntry, dir
   
   mapAllResources: (cb) ->
     @getResources =>
       for item in @data.currentResources
-        @findLocalFilePathForURL item.url, =>
-          cb?()
+        @findLocalFilePathForURL item.url, (err, success) =>
+          cb? null, 'done'
 
 
 module.exports = Application
