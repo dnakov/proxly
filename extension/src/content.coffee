@@ -21,8 +21,9 @@
 
 
 # app = new ExtContent
-return [].map.call document.querySelectorAll('script[src],link[href]'), (e) ->
+resources = [].map.call document.querySelectorAll('script[src],link[href]'), (e) ->
         url = if e.href? then e.href else e.src
+        url = '' unless url?
         url: url
         path: if e.attributes['src']?.value? then e.attributes['src'].value else e.attributes['href']?.value
         href: e.href
@@ -31,4 +32,6 @@ return [].map.call document.querySelectorAll('script[src],link[href]'), (e) ->
         tagName: e.tagName
         extension: url.match(/\.([^\.]*$)/)?[1]
       .filter (e) ->
-          if e.url.match('^(https?)|(chrome-extension)|(file):\/\/.*')? then true else false
+          if e.url?.match('^https?|http?|chrome-extension|file:\/\/.*')? then true else false
+console.log resources
+return resources

@@ -9,7 +9,8 @@
     "angular": "^1.2.16",
     "browserify": "^3.46.1",
     "observed": "^1.0.0",
-    "browserify-shim": "^3.5.0"
+    "browserify-shim": "^3.5.0",
+    "angular-animate": "0.0.2"
   },
   "browser": {
     "jquery": "./js/vendor/jquery.js"
@@ -18,7 +19,9 @@
     "jquery": "$"
   },
   "browserify": {
-    "transform": [ "browserify-shim" ]
+    "transform": [
+      "browserify-shim"
+    ]
   },
   "devDependencies": {
     "angular-sanitize": "0.0.1",

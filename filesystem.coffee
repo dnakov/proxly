@@ -1,6 +1,11 @@
+LISTEN = require './listen.coffee'
+MSG = require './msg.coffee'
+
 class FileSystem
   api: chrome.fileSystem
   retainedDirs: {}
+  LISTEN: LISTEN.get() 
+  MSG: MSG.get()
   constructor: () ->
 
   # @dirs: new DirectoryStore
@@ -12,23 +17,23 @@ class FileSystem
 
   #   reader.readAsArrayBuffer blob
 
-  readFile: (dirEntry, path, success, error) ->
+  readFile: (dirEntry, path, cb) ->
     @getFileEntry dirEntry, path,
       (fileEntry) =>
         fileEntry.file (file) =>
-          success(fileEntry, file)
-        ,(err) => error err
-      ,(err) => error err
+          cb? null, fileEntry, file)
+        ,(err) => cb? err
+      ,(err) => cb? err
 
-  getFileEntry: (dirEntry, path, success, error) ->
+  getFileEntry: (dirEntry, path, cb) ->
     if dirEntry?.getFile?
       dirEntry.getFile path, {}, (fileEntry) ->
-        success fileEntry
-      ,(err) => error err
-    else error()
+        cb? null, fileEntry
+      ,(err) => cb? err
+    else cb? err
 
   # openDirectory: (callback) ->
-  openDirectory: (directoryEntry, callback) ->
+  openDirectory: (directoryEntry, cb) ->
   # @api.chooseEntry type:'openDirectory', (directoryEntry, files) =>
     @api.getDisplayPath directoryEntry, (pathName) =>
       dir =
@@ -36,9 +41,16 @@ class FileSystem
           directoryEntryId: @api.retainEntry(directoryEntry)
           entry: directoryEntry
 
-        callback pathName, dir
+        cb null, pathName, dir
           # @getOneDirList dir
           # Storage.save 'directories', @scope.directories (result) ->
+
+  getLocalFileEntry: (dir, filePath, cb) => 
+    chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+      @getFileEntry dirEntry, filePath,
+      (fileEntry) =>
+        cb? null, fileEntry
+      ,(err) => cb? err
 
   getLocalFile: (dir, filePath, cb, error) => 
   # if @retainedDirs[dir.directoryEntryId]?
@@ -52,49 +64,49 @@ class FileSystem
       # @retainedDirs[dir.directoryEntryId] = dirEntry
       @readFile dirEntry, filePath,
           (fileEntry, file) =>
-              cb?(fileEntry, file)
-          ,(_error) => error(_error)
-      ,(_error) => error(_error)
+              cb? null, fileEntry, file
+          ,(_error) => cb?(_error)
+      ,(_error) => cb?(_error)
 
       # @findFileForQueryString info.uri, success,
       #     (err) =>
-      #         @findFileForPath info, success, error
+      #         @findFileForPath info, cb
 
-  findFileForPath: (info, success, error) =>
-      @findFileForQueryString info.uri, success, error, info.referer
+  # findFileForPath: (info, cb) =>
+  #     @findFileForQueryString info.uri, cb, info.referer
 
-  findFileForQueryString: (_url, cb, error, referer) =>
-      url = decodeURIComponent(_url).replace /.*?slredir\=/, ''
+  # findFileForQueryString: (_url, cb, error, referer) =>
+  #     url = decodeURIComponent(_url).replace /.*?slredir\=/, ''
 
-      match = item for item in @maps when url.match(new RegExp(item.url))? and item.url? and not match?
+  #     match = item for item in @maps when url.match(new RegExp(item.url))? and item.url? and not match?
 
-      if match?
-          if referer?
-              filePath = url.match(/.*\/\/.*?\/(.*)/)?[1]
-          else
-              filePath = url.replace new RegExp(match.url), match.regexRepl
+  #     if match?
+  #         if referer?
+  #             filePath = url.match(/.*\/\/.*?\/(.*)/)?[1]
+  #         else
+  #             filePath = url.replace new RegExp(match.url), match.regexRepl
 
-          filePath.replace '/', '\\' if platform is 'win'
+  #         filePath.replace '/', '\\' if platform is 'win'
 
-          dir = @Storage.data.directories[match.directory]
+  #         dir = @Storage.data.directories[match.directory]
 
-          if not dir? then return err 'no match'
+  #         if not dir? then return err 'no match'
 
-          if @retainedDirs[dir.directoryEntryId]?
-              dirEntry = @retainedDirs[dir.directoryEntryId]
-              @readFile dirEntry, filePath,
-                  (fileEntry, file) =>
-                      cb?(fileEntry, file)
-                  ,(error) => error()
-          else
-              chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
-                  @retainedDirs[dir.directoryEntryId] = dirEntry
-                  @readFile dirEntry, filePath,
-                      (fileEntry, file) =>
-                          cb?(fileEntry, file)
-                      ,(error) => error()
-                  ,(error) => error()
-      else
-          error()
+  #         if @retainedDirs[dir.directoryEntryId]?
+  #             dirEntry = @retainedDirs[dir.directoryEntryId]
+  #             @readFile dirEntry, filePath,
+  #                 (fileEntry, file) =>
+  #                     cb?(fileEntry, file)
+  #                 ,(error) => error()
+  #         else
+  #             chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+  #                 @retainedDirs[dir.directoryEntryId] = dirEntry
+  #                 @readFile dirEntry, filePath,
+  #                     (fileEntry, file) =>
+  #                         cb?(fileEntry, file)
+  #                     ,(error) => error()
+  #                 ,(error) => error()
+  #     else
+  #         error()
 
 module.exports = FileSystem

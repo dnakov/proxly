@@ -2,14 +2,21 @@ class Redirect
   data:
     tabId:
       listener:null
-      maps:
-        url:null
-        regexRepl:null
       isOn:false
   
   prefix:null
+  currentMatches:{}
   currentTabId: null
-
+  getLocalFilePath: ->
+  # http://stackoverflow.com/a/27755
+  # url: RegExp['$&'],
+  # protocol:RegExp.$2,
+  # host:RegExp.$3,
+  # path:RegExp.$4,
+  # file:RegExp.$6, // 8
+  # query:RegExp.$7,
+  # hash:RegExp.$8
+         
   constructor: ->
 
   tab: (tabId) ->
@@ -21,12 +28,21 @@ class Redirect
     @prefix = prefix
     this
 
-  withMaps: (maps...) ->
-    if maps.length is 0
+  withDirectories: (directories) ->
+    if directories?.length is 0
+      @data[@currentTabId].directories = [] 
+      @_stop @currentTabId
+    else #if Object.keys(@data[@currentTabId]).length is 0
+      @data[@currentTabId].directories = directories
+      @start()
+    this    
+
+  withMaps: (maps) ->
+    if Object.getOwnPropertyNames(maps).length is 0
       @data[@currentTabId].maps = {} 
       @_stop @currentTabId
     else #if Object.keys(@data[@currentTabId]).length is 0
-      @data[@currentTabId].maps = @toDict maps, 'url'
+      @data[@currentTabId].maps = maps
       @start()
     this
 
@@ -71,28 +87,12 @@ class Redirect
         @stopServer()
 
   createRedirectListener: () ->
-    (details) ->
-      return @findLocalFilePathForURL details
-
-  findLocalFilePathForURL: (details, referer) =>
-    currentMap = @data[details.tabId]
-    return {} unless currentMap?
-
-    url = details.url
-
-    for regex, regexRepl of currentMap
-      do (regex, regexRepl) ->
-        match = url.match(new RegExp(regex))? and regex?
-
-        if match and isRedirect
-          if referer?
-            filePath = url.match(/.*\/\/.*?\/(.*)/)?[1]
-          else
-            filePath = url.replace new RegExp(regex), regexRepl
-
-          return redirectUrl: @prefix + filePath
-
-    return {}
+    (details) =>
+      path = @getLocalFilePath details.url
+      if path?
+        return redirectUrl:@prefix + path
+      else
+        return {} 
 
   toDict: (obj,key) ->
     obj.reduce ((dict, _obj) -> dict[ _obj[key] ] = _obj if _obj[key]?; return dict), {}

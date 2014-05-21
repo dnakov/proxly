@@ -19,11 +19,11 @@ class Config
         _callback = callback
         _arguments = Array.prototype.slice.call(arguments)
         args = []
-        if _arguments.length is 0
+        if _arguments.length is 0 or not _arguments[0]?
           args.push null
         else
           args = _arguments
-
+        # _args = args[0]?.push(args[1])
         f.apply _klas, args
 
   wrapObjInbound: (obj) ->

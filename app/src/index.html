@@ -88,11 +88,6 @@
         </div>
         <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
-            <!-- <div class="panel-content"> -->
-
-            <!-- <div class="row"> -->
-<!--             <input type="checkbox" class="proxly-switch">
-            <span class="label label-default">Project Name</span -->
                 <div class="panel-heading">
                     <div class="input-group proxly-name">
                         <div class="btn-group">
@@ -104,10 +99,7 @@
                             <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
                         </span>
                     </div>
-                <!-- </div> -->
-            
-            <!-- </div> -->
-            <!-- <br/> -->
+
 
                 <div class="row" ng-show="item.isRedirect == true">
                     <div class="col-xs-6">
@@ -118,56 +110,38 @@
                         <span class="label label-default">Replace With</span>
                         <input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
                     </div>
-                </div>
-
-            <!-- </div> -->
-            <!-- <div class="panel-footer"> -->
-            <!-- <div class="row">
-                <div class="col-xs-6">
-                    <div class="btn-group">
-                        <button type="button" ng-click="item.isRedirect = true" class="btn btn-xs {{item.isRedirect ? 'btn-primary' : ''btn-default''}}">Redirect</button>
-                        <button ng-click="item.isRedirect = false" type="button" class="btn btn-xs {{item.isRedirect ? ''btn-default'' : 'btn-primary'}}">Host</button>
+                </div>       
+                <div class="resource-footer" id="drop_zone">
+                    <div class="container-fluid">
+                        <div class="row" ng-repeat="res in $parent.filteredResources = (currentResources | regex:'url':$parent.currentFilter.url) track by $index">
+                            <div class="col-xs-12 resource-list">
+                                <dl class="dl-horizontal">
+                                    <div></div>
+                                    <!-- <dd/> -->
+                                    <dt>URL</dt>
+                                    <dd>
+                                        <p ng-bind-html="res.url | highlight:$parent.currentFilter.url:caseSensitive">{{res.url}}</p>
+                                    </dd>
+                                    <dt>Redirect</dt>
+                                    <dd>
+                                        <p>http://{{server.host}}:{{server.port}}/{{res.localPath}}</p>
+                                    </dd>
+                                    <dt>File</dt>
+                                    <dd>
+                                        <p>{{res.localFile}}
+                                        </p>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <br/>
-            <div class="row" ng-show="item.isRedirect == true">
-                <div class="col-xs-6">
-                    <span class="label label-default">Match</span>
-                    <input ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm proxly-input" />
-                </div>
-                <div class="col-xs-6">
-                    <span class="label label-default">Replace With</span>
-                    <input ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm proxly-input" />
-                </div>
-            </div>
+                </div> 
 
-            <!-- </div> -->            
         </div>
     </div>
 
-    <div class="resource-footer" id="drop_zone">
-        <div class="container-fluid">
-            <div class="row" ng-repeat="res in filteredResources = (currentResources | regex:'url':currentFilter.url) track by $index">
-                <div class="col-xs-12 resource-list">
 
-                    <dl class="dl-horizontal">
-                        <div></div>
-                        <!-- <dd/> -->
-                        <dt>URL</dt>
-                        <dd>
-                            <p ng-bind-html="res.url | highlight:currentFilter.url:caseSensitive">{{res.url}}</p>
-                        </dd>
-                        <dt>Local</dt>
-                        <dd>
-                            <p>{{res.localPath}}</p>
-                        </dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    </div> 
-    </div>
+    
     <div class="container-fluid">
         <img src="images/icon-38.png" class="proxly-image" style="" />
         <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom" role="navigation">
@@ -237,6 +211,7 @@
         </nav>
 
 
+    </div>
     </div>
     <div class="dropper"><span class="glyphicon glyphicon-folder-open glyphicon-align-center"></span></div>
     <script src="scripts/index.bundle.js"></script>

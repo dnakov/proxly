@@ -95,6 +95,8 @@ class MainCtrl
     @scope.toggleItem = @toggleItem
     @scope.getClass = @getClass
     @scope.newItem = @newItem
+    @scope.currentFileMatches = @data.currentFileMatches
+
     $document.on 'dragenter', @onDrop
 
     # @app.Storage.retrieveAll () =>
@@ -121,12 +123,13 @@ class MainCtrl
       dir.name = pathName.match(/[^\/]+$/)?[0]
       delete dir.entry
       dir.pathName = pathName
+      dir.isOn = true
       @data.directories.unshift dir
       @scope.$apply()
 
 
   loadCurrentResources: () ->
-    @app.MSG.Ext 'getResources':true
+    @app.getResources()
 
   save: (close) =>
     @app.Storage.saveAllAndSync()
@@ -166,14 +169,23 @@ class MainCtrl
   setLocalPath: (item) =>
     @scope.currentFilter = item
     reg = new RegExp item.url
-    (resource.localPath = resource.url.replace(reg, item.regexRepl)) for resource in @filteredResources if @filteredResources?
+    for resource in @scope.filteredResources
+      resource.localPath = resource.url.replace(reg, item.regexRepl)
+      _dirs = [] 
+      _dirs.push dir for dir in @scope.directories when dir.isOn
+      @app.findLocalFilePathForURL resource.url, (fileMatch, directory) => 
+        for res in @scope.filteredResources when res.localPath is fileMatch.filePath
+          res.localFile = directory.pathName + '/' + res.localPath
+        @scope.$apply()
+
 
   openDirectory: (cb) =>
     # @app.FS.openDirectory (pathName, dir) =>
     chrome.fileSystem.chooseEntry type:'openDirectory', (directoryEntry, files) =>
       @app.FS.openDirectory directoryEntry, (pathName, dir) =>
         dir.name = pathName.match(/[^\/]+$/)?[0]
-        dir.pathName = pathName        
+        dir.pathName = pathName    
+        dir.isOn = true    
         # can't save circular blah blah
         delete dir.entry
         @data.directories.unshift dir

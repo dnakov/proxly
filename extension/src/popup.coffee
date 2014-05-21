@@ -35,9 +35,11 @@ class MainCtrl
     item.isOn = !item.isOn
     _maps.push _item for _item in @scope.maps when _item.isOn
 
-    app.Redirect
-    .tab @currentTab.id
-    .withMaps _maps
+    app.mapAllResources () =>
+      app.Redirect
+      .tab @currentTab.id
+      .withPrefix 'http://' + app.data.server.host + ':' + app.data.server.port + '/'
+      .start()
 
     @app.startServer() unless @data.server?.isOn
     # _item.isOn = false for _item in @maps when _item isnt @currentMap
