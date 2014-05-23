@@ -154,11 +154,13 @@ class Server
       data = @arrayBufferToString(readInfo.data)
       show data
 
-      if data.indexOf("GET ") isnt 0
-        return cb? '404'
-
       keepAlive = false
       keepAlive = true if data.indexOf 'Connection: keep-alive' isnt -1
+
+      if data.indexOf("GET ") isnt 0
+        return cb? '404', keepAlive:keepAlive
+
+
 
       uriEnd = data.indexOf(" ", 4)
 
@@ -166,7 +168,7 @@ class Server
 
       uri = data.substring(4, uriEnd)
       if not uri?
-        return cb? '404'
+        return cb? '404', keepAlive:keepAlive
 
       info =
         uri: uri

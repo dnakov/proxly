@@ -10,14 +10,29 @@ root = getGlobal()
 # app = new lib.Application
 chrome.browserAction.setPopup popup:"popup.html"
 
+
+
 Application = require '../../common.coffee'
 Redirect = require '../../redirect.coffee'
 Storage = require '../../storage.coffee'
 FileSystem = require '../../filesystem.coffee'
 
-root.app = new Application
-  Redirect: new Redirect
+redir = new Redirect
+
+app = root.app = new Application
+  Redirect: redir
   Storage: Storage
   FS: FileSystem
+  
+app.Storage.retrieveAll(null)
+#   app.Storage.data[k] = data[k] for k of data
+  
+chrome.tabs.onUpdated.addListener (tabId, changeInfo, tab) =>
+  if redir.data[tabId]?.isOn
+    app.mapAllResources () =>
+      chrome.tabs.setBadgeText 
+        text:Object.keys(app.currentFileMatches).length
+        tabId:tabId
+     
 
-root.app.Storage.retrieveAll()
+

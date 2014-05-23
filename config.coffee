@@ -21,7 +21,7 @@ class Config
             if args.arguments?.length >= 0
               return f.apply _klas, args.arguments.concat arguments[1] 
             else
-              return f.apply _klas, [null].concat arguments[1]
+              return f.apply _klas, [].concat arguments[1]
         
         return f.apply _klas, arguments
 

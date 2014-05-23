@@ -70,7 +70,7 @@ class Observable
         type = change.type
         name = change.name
         value = object[name]
-        path = (if prefix then prefix + "." + name else name)
+        path = (if prefix then prefix + "^^" + name else name)
         if "add" is type and null isnt value and "object" is typeof value
           new Observable(value, parent, path)
         else parent._remove change.oldValue  if "delete" is type and "object" is typeof change.oldValue

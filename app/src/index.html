@@ -4,6 +4,7 @@
 <head>
     <title>Redirector</title>
     <meta name="viewport" content="width=device-width">
+    <link rel="chrome-webstore-item" href="https://chrome.google.com/webstore/detail/proxly/ijcjmpejonmimoofbcpaliejhikaeomh">
     <link rel="stylesheet" href="styles/bootstrap.css">
     <link rel="stylesheet" href="styles/bootstrap-theme.css">
     <link rel="stylesheet" href="styles/main.css">
@@ -12,7 +13,7 @@
 
 </head>
 
-<body ng-controller="MainCtrl" ng-cloak id="">
+<body ng-controller="ProxlyCtrl" ng-cloak id="">
   <div id="main-container">
     <div class="container-fluid">
         <img src="images/icon-38.png" class="proxly-image" style="" />
@@ -65,25 +66,39 @@
         <div ng-show="navIsRedirect==false" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
                 <div class="panel-body">
                     <div class="input-group proxly-name">
-                        <div class="btn-group">
-                        <flip-switch bool-model="item.isOn" identifier="dir-{{$index}}"/>
+                        <div class="col-xs-2">
+                            <div class="btn-group">
+                            <flip-switch bool-model="item.isOn" identifier="dir-{{$index}}"/>
                         <!-- <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('on', item)">On</button> -->
                         <!-- <button ng-click="toggleItem(item)" type="button" class="btn " ng-class="getClass('off', item)">Off</button> -->
-                        
+                            </div>
+
                         </div>
-                        <input type="text" id="projectName" class="proxly-input project-name" ng-model="item.name"></input>
-                        <span class="input-group-btn">
-                            <button class="btn btn-danger" ng-click="deleteDirectory(item)">&nbsp;Delete&nbsp;</button>
-                        </span>
+                        <div class="col-xs-10">
+                            <div class="col-xs-11">
+                                <input type="text" id="projectName" class="form-control proxly-input project-name" ng-model="item.name"></input>
+                            </div>
+                            <div class="col-xs-1">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-danger" ng-click="deleteDirectory(item)">&nbsp;Delete&nbsp;</button>
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="input-group proxly-folder">
+                        <div class="col-xs-1">
+                            <span class="glyphicon glyphicon-folder-open"></span>
+                        </div>
+                        <div class="col-xs-10">
+                            <code>{{item.pathName}}</code>
+                        </div>
                     
-                        <span class="glyphicon glyphicon-folder-open"></span>
-                        <code>{{item.pathName}}</code>
-                        <span class="input-group-btn">
-                            <button class="btn btn-info" ng-click="openDirectory(item)">Browse</button>
-                        </span>
+                        <div class="col-xs-1">
+                            <span class="input-group-btn">
+                                <button class="btn btn-info" ng-click="openDirectory(item)">Browse</button>
+                            </span>
+                        </div>
                     </div>
                 </div>
         </div>
@@ -91,22 +106,33 @@
 
                 <div class="panel-body">
                     <div class="input-group proxly-name">
-                        <div class="btn-group">
-                            <flip-switch bool-model="item.isOn" identifier="redir-{{$index}}"/>
-                            <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
-                            <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
+                        <div class="col-xs-2">
+                            <div class="btn-group">
+                                <flip-switch bool-model="item.isOn" identifier="redir-{{$index}}"/>
+                                <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
+                                <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
+                            </div>
                         </div>
-                        <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name"></input>
-                        <span class="input-group-btn">
-                            <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
-                        </span>
+                        <div class="col-xs-10">
+                            <div class="col-xs-10">
+                                <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name"></input>
+                            </div>
+                            <div class="col-xs-1">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
+                                </span>
+                            </div>
+                        </div>
                     </div>
 
 
                 <div class="row" ng-show="item.isRedirect == true">
                     <div class="col-xs-6">
                         <span class="label label-default">Match</span>
-                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+                        <input list="regex-url" ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+<!--                         <datalist id="regex-url">
+                            <option value="test"></option>
+                        </datalist> -->
                     </div>
                     <div class="col-xs-6">
                         <span class="label label-default">Replace With</span>
@@ -114,6 +140,10 @@
                     </div>
                 </div>       
         </div>
+<!--         <div ng-show="!navIsRedirect || !extInfo.enabled" class="bs-callout bs-callout-danger">
+            <h4>Chrome extension not installed/enabled</h4>
+            <p>Get it here <a href="" ng-click="installExtension()"></a></p>
+        </div> -->
     </div>
 
 
@@ -193,7 +223,7 @@
             </div>
             <div class="resource-footer">
                     <div class="container-fluid">
-                        <div class="row" ng-repeat="res in $parent.filteredResources = (currentResources | regex:'url':$parent.currentFilter.url) track by $index">
+                        <div class="row" ng-repeat="res in filteredResources = (currentResources | regex:'url':currentFilter.url) track by $index">
                             <div class="col-xs-12 resource-list">
                                 <dl class="dl-horizontal">
                                     <div></div>

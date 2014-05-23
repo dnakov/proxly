@@ -21,7 +21,7 @@ class FileSystem
     @getFileEntry dirEntry, path,
       (err, fileEntry) =>
         
-        if err? then cb? err
+        if err? then return cb? err
 
         fileEntry.file (file) =>
           cb? null, fileEntry, file
@@ -29,7 +29,7 @@ class FileSystem
 
   getFileEntry: (dirEntry, path, cb) ->
       dirEntry.getFile path, {}, (fileEntry) =>
-        cb? null, fileEntry
+        return cb? null, fileEntry
       ,(err) => cb? err
 
   # openDirectory: (callback) ->
@@ -46,25 +46,26 @@ class FileSystem
 
   getLocalFileEntry: (dir, filePath, cb) => 
     chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
-      @getFileEntry dirEntry, filePath,
-        (err, fileEntry) =>
-          if err? then cb? err 
-          cb? null, fileEntry
+      dirEntry.getFile filePath, {}, (fileEntry) =>
+        return cb? null, fileEntry
+      ,(err) => cb? err
 
-  getLocalFile: (dir, filePath, cb, error) => 
-  # if @retainedDirs[dir.directoryEntryId]?
-  #   dirEntry = @retainedDirs[dir.directoryEntryId]
-  #   @readFile dirEntry, filePath,
-  #     (fileEntry, file) =>
-  #         cb?(fileEntry, file)
-  #     ,(_error) => error(_error)
-  # else
-    chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
-      # @retainedDirs[dir.directoryEntryId] = dirEntry
-      @readFile dirEntry, filePath, (err, fileEntry, file) =>
-        if err? then cb? err
-        cb? null, fileEntry, file
-    ,(_error) => cb?(_error)
+
+
+  # getLocalFile: (dir, filePath, cb, error) => 
+  # # if @retainedDirs[dir.directoryEntryId]?
+  # #   dirEntry = @retainedDirs[dir.directoryEntryId]
+  # #   @readFile dirEntry, filePath,
+  # #     (fileEntry, file) =>
+  # #         cb?(fileEntry, file)
+  # #     ,(_error) => error(_error)
+  # # else
+  #   chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+  #     # @retainedDirs[dir.directoryEntryId] = dirEntry
+  #     @readFile dirEntry, filePath, (err, fileEntry, file) =>
+  #       if err? then cb? err
+  #       cb? null, fileEntry, file
+  #   ,(_error) => cb?(_error)
 
       # @findFileForQueryString info.uri, success,
       #     (err) =>

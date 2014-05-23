@@ -43,7 +43,8 @@ class Application extends Config
     @startServer = @wrap @, 'Application.startServer', @startServer
     @restartServer = @wrap @, 'Application.restartServer', @restartServer
     @stopServer = @wrap @, 'Application.stopServer', @stopServer
-    
+    # @mapAllResources = @wrap @, 'Application.mapAllResources', @mapAllResources
+    @getFileMatch = @wrap @, 'Application.getFileMatch', @getFileMatch
 
     @wrap = if @SELF_TYPE is 'EXTENSION' then @wrapInbound else @wrapOutbound
 
@@ -56,10 +57,12 @@ class Application extends Config
     @init()
 
   init: () ->
-    @data.server =
+    # @Storage.init() if @Storage?
+    @data.server ?=
       host:"127.0.0.1"
       port:8089
       isOn:false
+    @data.currentFileMatches ?= {}
 
   getCurrentTab: (cb) ->
     # tried to keep only activeTab permission, but oh well..
@@ -116,14 +119,17 @@ class Application extends Config
   #             _resources.push item
   #     @Storage.save 'currentResources', resources
   getLocalFile: (info, cb) =>
-    url = info.uri
-    filePath = @getLocalFilePath url
-    fileEntryId = @data.currentFileMatches[filePath].fileEntry
-    if fileEntryId?
-      chrome.fileSystem.restoreEntry fileEntryId, (fileEntry) =>
-        fileEntry.file (file) =>
-          cb? null,fileEntry,file
-        ,(err) => cb? err
+    filePath = info.uri
+    # filePath = @getLocalFilePathWithRedirect url
+    return cb 'file not found' unless filePath?
+    _dirs = []
+    _dirs.push dir for dir in @data.directories when dir.isOn
+    filePath = filePath.substring 1 if filePath.substring(0,1) is '/'
+    @findFileForPath _dirs, filePath, (err, fileEntry, dir) =>
+      if err? then return cb? err
+      fileEntry.file (file) =>
+        cb? null,fileEntry,file
+      ,(err) => cb? err
 
     # dirName = info.uri
 
@@ -172,19 +178,19 @@ class Application extends Config
       @startServer()
 
   changePort: =>
-
-  getLocalFilePath: (url) ->
+  getLocalFilePathWithRedirect: (url) ->
     filePathRegex = /^((http[s]?|ftp|chrome-extension|file):\/\/)?\/?([^\/\.]+\.)*?([^\/\.]+\.[^:\/\s\.]{2,3}(\.[^:\/\s\.]‌​{2,3})?)(:\d+)?($|\/)([^#?\s]+)?(.*?)?(#[\w\-]+)?$/
-
-    @data.currentFileMatches ?= {}
-    
-    return {} unless @data.maps? and @data.directories?
+   
+    return null unless @data[@currentTabId]?.maps?
 
     resPath = url.match(filePathRegex)?[8]
+    if not resPath?
+      # try relpath
+      resPath = url
 
-    return {} unless resPath?
+    return null unless resPath?
     
-    for map in @data.maps
+    for map in @data[@currentTabId].maps
       resPath = url.match(new RegExp(map.url))? and map.url?
 
       if resPath
@@ -195,10 +201,13 @@ class Application extends Config
         break
     return filePath
 
-  findLocalFilePathForURL: (url, cb) ->
-    filePath = @getLocalFilePath url
-    return unless filePath?
-    @findFileInDirectories @data.directories, filePath, (err, fileEntry, directory) =>
+  URLtoLocalPath: (url, cb) ->
+    filePath = @Redirect.getLocalFilePathWithRedirect url
+
+  getFileMatch: (filePath, cb) ->
+    return cb? 'file not found' unless filePath?
+    show 'trying ' + filePath
+    @findFileForPath @data.directories, filePath, (err, fileEntry, directory) =>
 
       if err? 
         show 'no files found for ' + filePath
@@ -214,35 +223,37 @@ class Application extends Config
 
 
   findFileInDirectories: (directories, path, cb) ->
-    allDirs = directories.slice() unless allDirs?
-    err() if directories is undefined or path is undefined
-    _dirs = allDirs.slice()
+    myDirs = directories.slice() 
     _path = path
-    dir = _dirs.shift()
-    _path.replace(/.*?\//, '') if dir is undefined
-    if _path.match(/.*?\//)? #still directory
-      # dir = _dirs.shift()
-      if dir is undefined
-        _dirs = allDirs.slice() 
-        dir = _dirs.shift() 
+    _dir = myDirs.shift()
 
-      @FS.getLocalFileEntry dir, _path, 
-        (err, fileEntry) =>
-          if err?
-            @findFileInDirectories _dirs, _path, cb, err 
+    @FS.getLocalFileEntry _dir, _path, (err, fileEntry) =>
+      if err?
+        _dir = myDirs.shift()
+        if _dir isnt undefined
+          @findFileInDirectories myDirs, _path, cb
+        else
+          cb? 'not found'
+      else
+        cb? null, fileEntry, _dir
 
-          cb? null, fileEntry, dir
-    else
-      @FS.getLocalFileEntry dir, _path, 
-        (fileEntry) =>
-          if err? then cb? err
+  findFileForPath: (dirs, path, cb) ->
+    @findFileInDirectories dirs, path, (err, fileEntry, directory) =>
+      if err?
+        if path is path.replace(/.*?\//, '')
+          cb? 'not found'
+        else
+          @findFileForPath dirs, path.replace(/.*?\//, ''), cb
+      else
+        cb? null, fileEntry, directory
 
-          cb? null, fileEntry, dir
+
   
   mapAllResources: (cb) ->
     @getResources =>
       for item in @data.currentResources
-        @findLocalFilePathForURL item.url, (err, success) =>
+        localPath = @URLtoLocalPath item.url
+        @getFileMatch localPath, (err, success) =>
           cb? null, 'done'
 
 

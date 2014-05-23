@@ -125,7 +125,7 @@ border-color: #004C97;
   width:28px;
   height:28px;
 }
-.proxly-folder > span.glyphicon {
+.proxly-folder span.glyphicon {
   font-size: 24px;
   vertical-align: middle;
   margin-right: 10px;
@@ -191,21 +191,47 @@ ng\:form {
   z-index: 999999;
 }
 
-.repeated-item.ng-enter, .repeated-item.ng-move {
-  -webkit-transition:0.5s linear all;
-
-  opacity:0;
+.repeated-item {
+  /*height:;*/
 }
-
+.repeated-item.ng-enter 
+/*,.repeated-item.ng-move */
+{/*
+  transition:all 400ms ease-in-out;
+  height:0px;
+}*/
+/*    -webkit-animation: slideFromBottom 1s;
+    -moz-animation: slideFromBottom 1s;
+    -ms-animation: slideFromBottom 1s;
+    animation: slideFromBottom 1s;*/
+    /*opacity:0;*/
+}
+.repeated-item.ng-move {
+  /*transition:all 400ms ease-in-out;*/
+/*    -webkit-animation: slideFromBottom 1s;
+    -moz-animation: slideFromBottom 1s;
+    -ms-animation: slideFromBottom 1s;
+    animation: slideFromBottom 1s;  */
+}
+.repeated-item.ng-move.active {
+  /*transition:all 400ms ease-in-out;*/
+/*    -webkit-animation: slideFromBottom 1s;
+    -moz-animation: slideFromBottom 1s;
+    -ms-animation: slideFromBottom 1s;
+    animation: slideFromBottom 1s;  
+*/
+}
 /*
  The ng-enter-active and ng-move-active
  are where the transition destination properties
  are set so that the animation knows what to
  animate.
 */
-.repeated-item.ng-enter.ng-enter-active,
-.repeated-item.ng-move.ng-move-active {
-  opacity:1;
+.repeated-item.ng-enter.ng-enter-active
+/*,.repeated-item.ng-move.ng-move-active */
+{
+  /*transition:all 2000ms ease-in-out;*/
+  /*height:100px;*/
 }
 
 /*
@@ -213,11 +239,13 @@ ng\:form {
   the leave event is triggered for the element
   that has the .repeated-item class
 */
-.repeated-item.ng-leave {
-  -webkit-animation:0.5s my_animation;
-
+/*.repeated-item.ng-enter.ng-leave-active {
+  transition:all 2000ms ease-in-out;
+  
 }
-
+.repeated-item.ng-leave {
+  height:0px;
+}*/
 @keyframes my_animation {
   from { opacity:1; }
   to { opacity:0; }
@@ -245,7 +273,7 @@ ng\:form {
   bottom:25% !important;
 }
 .res-show.ng-hide-add,
-.res-show.ng-hide-remove {
+.res-show.ng-hide-remove, {
   display:block!important;
   transition:all 200ms ease-in-out;
 }
@@ -276,14 +304,20 @@ ng\:form {
 
 @-webkit-keyframes slideFromBottom {
   from {
-    -webkit-transform: translateY(100%);
-    transform: translateY(100%);
+    -webkit-transform: translateY(-100%);
+    transform: translateY(-100%);
+    /*opacity:0;*/
+    background-color:yellow;
+  }
+  to {
+    /*opacity:1;*/
+    background-color:red;
   }
 }
 @-webkit-keyframes slideToBottom {
   to {
-    -webkit-transform: translateY(100%);
-    transform: translateY(100%);
+    -webkit-transform: translateY(-100%);
+    transform: translateY(-100%);
   }
 }
 .onoffswitch {
@@ -335,4 +369,27 @@ ng\:form {
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
     right: 0px; 
+}
+
+.bs-callout-danger {
+  background-color: #fdf7f7;
+  border-color: #d9534f;
+}
+.bs-callout {
+  margin: 20px 0;
+  padding: 20px;
+  border-left: 3px solid #eee;
+}
+.bs-callout-danger h4 {
+  color: #d9534f;
+}
+.bs-callout h4 {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+.bs-callout p:last-child {
+  margin-bottom: 0;
+}
+p {
+  margin: 0 0 10px;
 }

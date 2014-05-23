@@ -1,3 +1,4 @@
+
 .ui-match {
     background: #00BC8C;
 }
@@ -6,25 +7,43 @@ html {
     height:100%;
     overflow:hidden;
 }
-
+input.project-name {
+    font-size: 1.5em !important;
+    padding-top:0 !important;
+    padding-bottom:0 !important;
+    font-weight:bold;
+}
+span.label.label-default {
+    background-color:#545454 !important;
+}
 body {
-    padding-top:30px;
-    min-width:400px;
-    min-height:300px;
-/*    height:800px;
-    width:650px;*/
-    /*overflow:scroll;*/
+    padding-top:50px;
+    padding-bottom:50px;
+    min-height:700px;
+    min-width:770px;
+    background-color: #f2f2f2;
+    /*font-size: 1.3em;*/
+
+    overflow:scroll;
 }
 .main-content {
     overflow-y:scroll;
-    height:75%;
+
+}
+.dl-horizontal p {
+    margin:0;
+    -webkit-user-select: initial;
+}
+.dl-horizontal {
+    margin-top:0;
+    margin-bottom:0;
 }
 .dl-horizontal dd {
     margin-left: 55px;
     /*padding-left:5px;*/
 }
 .dl-horizontal dt {
-    width:50px;
+    width:70px;
     text-align: right;
 }
 .iconic-cogs {
@@ -34,7 +53,23 @@ body {
 .file-icon > .iconic {
     margin-top:18px;
 }
-
+.btn-info {
+  color: #fff;
+  text-shadow: 0 1px rgba(0, 0, 0, .1);
+  background-image: none;
+  background-repeat: repeat-x;
+  border: 1px solid #0057B8;
+  background-color: #004C97;
+}
+.btn-info:hover, .btn-info:focus, .btn-info:active, .btn-info.active, .open .dropdown-toggle.btn-info {
+  color: #fff;
+  background-color: #009CDE;
+  background-image: none;
+  border: 1px solid #0057B8;
+}
+.panel {
+  border-radius: 2px;
+}
 .resource-list, .file-icon {
     padding-left:0px;
     margin-bottom:10px;
@@ -49,44 +84,256 @@ body {
 .server-off {
     color:#e74c3c;
 }
+.panel-info {
+border-color: #004C97;
+}
 .resource-footer {
-  position: relative;
+  position: fixed;
   overflow-y:scroll;
-  bottom: 0;
+  /*bottom: 0;*/
+  color:#FFF;
   width: 100%;
   /* Set the fixed height of the footer here */
-  height:25%;
-  background-color: #375A7F;
+  height:25.1%;
+  background-color: #2D2D2D;
+  
+}
+.resource-footer .bar {
+
+}
+
+.resource-list {
+
+}
+.resource-list dd span {
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+  border-radius: 0;
+  padding: 2px 4px;
+  font-size: 90%;
+  color: #c7254e;
+  white-space: nowrap;
 }
 .proxly-input {
-    background-color: #464545;
-    color: #FFF;
+    background-color: transparent;
+    border: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+
+    /*color: #FFF !important;*/
+}
+.proxly-image {
+  position:absolute;top:0px;left:0px;z-index:9000000;
+  width:28px;
+  height:28px;
+}
+.proxly-folder > * > span.glyphicon {
+  font-size: 24px;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+.proxly-folder > * > code {
+  margin-top: auto;
+  margin-bottom: auto;
+  vertical-align: middle;
+
+}
+.proxly-name {
+  margin-bottom:;
+}
+.proxly-name > .btn-group {
+  margin-right:10px;
+}
+/*.proxly-name {
+  color: #FFF;
+  margin-left:20px;
+}
+.proxly-host {
+  color:#FFF;
+  text-align: center;
+  vertical-align: middle;
+}*/
+.proxly-port {
+  padding-left:0 !important;
+  width:60px !important;
+}
+/* angular csp */
+@charset "UTF-8";
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak],
+.ng-cloak, .x-ng-cloak,
+.ng-hide {
+  display: none !important;
 }
 
-/*    .iconic-cogs-cog-large {
-        -webkit-transform-origin: 50% 50% 0;
-        -webkit-animation: rotateCog 5s infinite linear;
-    }
-    .iconic-cogs-cog-large .off {
-        -webkit-animation-name: none;
-    }
-    .iconic-cogs-cog-small .off {
-        -webkit-animation-name: none;
-    }
-
-    @-webkit-keyframes rotateCog {
-    100% {
-        -wekbit-transform: rotate(360deg);
-    }
+ng\:form {
+  display: block;
 }
-    .iconic-cogs-cog-small {
-        -wekbit-transform-origin: 50% 50% 0;
-        -wekbit-transform: rotate(0deg);
-        -webkit-animation: rotateSmallCog 5s infinite linear;
-    }
 
-    @-webkit-keyframes rotateSmallCog {
-    100% {
-        -webkit-transform: rotate(-360deg);
-    }*/
+.dropper {
+  display:none;
+  position:fixed;
+  opacity:0.7;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background-color:#000;
+}
+.dropper .glyphicon-folder-open {
+  font-size:80px;
+  color:#FFF;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);  
+}
+.dropping .dropper {
+  background-color:black;
+  display:block !important;
+  z-index: 999999;
+}
+
+.repeated-item.ng-enter, .repeated-item.ng-move {
+  -webkit-transition:0.5s linear all;
+
+  opacity:0;
+}
+
+/*
+ The ng-enter-active and ng-move-active
+ are where the transition destination properties
+ are set so that the animation knows what to
+ animate.
+*/
+.repeated-item.ng-enter.ng-enter-active,
+.repeated-item.ng-move.ng-move-active {
+  opacity:1;
+}
+
+/*
+  We're using CSS keyframe animations for when
+  the leave event is triggered for the element
+  that has the .repeated-item class
+*/
+.repeated-item.ng-leave {
+  -webkit-animation:0.5s my_animation;
+
+}
+
+@keyframes my_animation {
+  from { opacity:1; }
+  to { opacity:0; }
+}
+
+/*
+  Unfortunately each browser vendor requires
+  its own definition of keyframe animation code...
+*/
+@-webkit-keyframes my_animation {
+  from { opacity:1; }
+  to { opacity:0; }
+}
+
+@-moz-keyframes my_animation {
+  from { opacity:1; }
+  to { opacity:0; }
+}
+
+@-o-keyframes my_animation {
+  from { opacity:1; }
+  to { opacity:0; }
+}
+.res-show {
+  bottom:25% !important;
+}
+.res-show.ng-hide-add,
+.res-show.ng-hide-remove {
+  display:block!important;
+  transition:all 200ms ease-in-out;
+}
+.res-show.ng-hide-add {
+  transition:all 200ms ease-in-out;
+}
+.res-show.ng-hide-remove {
+  transition:all 200ms ease-in-out;
+}
+
+.res-show.ng-hide-add.ng-hide-add-active,
+.res-show.ng-hide-remove.ng-hide-remove-active {
+  transition:all 200ms ease-in-out;
+}
+
+.res-show.ng-hide {
+  display:block!important;
+  transition:all 200ms ease-in-out;
+  bottom:0 !important;
+}
+
+.slide-from-bottom {
+  animation: slideFromBottom 1000ms forwards ease-in-out;
+}
+.slide-to-bottom {
+  animation: slideToBottom 1000ms forwards ease-in-out;
+}
+
+@-webkit-keyframes slideFromBottom {
+  from {
+    -webkit-transform: translateY(100%);
+    transform: translateY(100%);
+  }
+}
+@-webkit-keyframes slideToBottom {
+  to {
+    -webkit-transform: translateY(100%);
+    transform: translateY(100%);
+  }
+}
+.onoffswitch {
+    position: relative; width: 90px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 2px solid #53565A; border-radius: 2px;
+}
+.onoffswitch-inner {
+    display: block; width: 200%; margin-left: -100%;
+    -moz-transition: margin 0.3s ease-in 0s; -webkit-transition: margin 0.3s ease-in 0s;
+    -o-transition: margin 0.3s ease-in 0s; transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    display: block; float: left; width: 50%; height: 30px; padding: 0; line-height: 30px;
+    font-size: 16px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+}
+.onoffswitch-inner:before {
+    content: "ON";
+    padding-left: 10px;
+    background-color: #009CDE; color: #FFFFFF;
+}
+.onoffswitch-inner:after {
+    content: "OFF";
+    padding-right: 10px;
+    background-color: #F2F2F2; color: #53565A;
+    text-align: right;
+}
+.onoffswitch-switch {
+    display: block; width: 39px; margin: 0px;
+    background: #FFFFFF;
+    border: 2px solid #53565A; border-radius: 2px;
+    position: absolute; top: 0; bottom: 0; right: 51px;
+    -moz-transition: all 0.3s ease-in 0s; -webkit-transition: all 0.3s ease-in 0s;
+    -o-transition: all 0.3s ease-in 0s; transition: all 0.3s ease-in 0s; 
+    background-image: -moz-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
+    background-image: -webkit-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
+    background-image: -o-linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
+    background-image: linear-gradient(center top, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px; 
 }
