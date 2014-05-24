@@ -15,54 +15,53 @@ class Storage
 
   callback: () ->
   notifyOnChange: () ->
-  constructor: () ->
-
-    @data ?= data
-    @observer = Observable @data
-    @observer.on 'change', (change) =>
-      show 'tell changing data'
-      show change
-      @MSG.ExtPort 'dataChanged':change
-
-
-    @LISTEN.Ext 'dataChanged', (change) =>
-      @data ?= {}
-      _data = @data
-      # show 'data changed '
-      # show change
-      # return if @isArray(change.object)
-
-      @observer.stop()
-      ((data) ->
-        stack = change.path.split '^^'
-
-        return data[stack[0]] = change.value if not data[stack[0]]?
-
-        while stack.length > 1 
-          _shift = stack.shift()
-          if /^\d+$/.test _shift then _shift = parseInt _shift
-          data = data[_shift] 
-
-        _shift = stack.shift()
-        if /^\d+$/.test _shift then _shift = parseInt _shift
-        data[_shift] = change.value
-      )(@data)
-
-      # change.path = change.path.replace(/\.(\d+)\./g, '[$1].') if @isArray change.object
-      
-
-      @saveAll(null)
-      
+  constructor: (_onDataLoaded) ->
+    @onDataLoaded = _onDataLoaded if _onDataLoaded?
+    @api.get (results) =>
+      @data[k] = results[k] for k of results
       @observer = Observable @data
       @observer.on 'change', (change) =>
-        show 'tell changing data'
-        show change
-        @MSG.ExtPort 'dataChanged':change
+        @api.set @data
+        @MSG.ExtPort 'dataChanged':change 
 
-      # @onChangedAll()
+      @LISTEN.Ext 'dataChanged', (change) =>
+        @data ?= {}
+        _data = @data
+        # show 'data changed '
+        # show change
+        # return if @isArray(change.object)
+
+        @observer.stop()
+        ((data, api) ->
+          stack = change.path.split '^^'
+
+          return data[stack[0]] = change.value if not data[stack[0]]?
+
+          while stack.length > 1 
+            _shift = stack.shift()
+            if /^\d+$/.test _shift then _shift = parseInt _shift
+            data = data[_shift] 
+
+          _shift = stack.shift()
+          if /^\d+$/.test _shift then _shift = parseInt _shift
+          data[_shift] = change.value
+        )(@data, @api)
+
+        # change.path = change.path.replace(/\.(\d+)\./g, '[$1].') if @isArray change.object
+        
+        
+        
+        @observer = Observable @data
+        @observer.on 'change', (change) =>
+          @api.set @data
+          @MSG.ExtPort 'dataChanged':change
+
+        # @onChangedAll()
+      # @retrieveAll()
+      @onDataLoaded @data
 
   init: () ->
-    @retrieveAll()
+    # @retrieveAll()
 
   isArray: -> 
     Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
@@ -106,7 +105,7 @@ class Storage
         @MSG.ExtPort 'dataChanged':
           path:c
           value:result[c]
-
+      api.set @data
       # @callback? result
       cb? result
       show result
@@ -116,6 +115,8 @@ class Storage
       # @observer.on 'change', (change) =>
       #   show 'tell changing data'
       #   @MSG.ExtPort 'dataChanged':change
+
+  onDataLoaded: (data) ->
 
   onChanged: (key, cb) ->
     chrome.storage.onChanged.addListener (changes, namespace) ->

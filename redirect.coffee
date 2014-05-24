@@ -18,7 +18,7 @@ class Redirect
          
   constructor: ->
   
-  getLocalFilePathWithRedirect: (url) ->
+  getLocalFilePathWithRedirect: (url) =>
     filePathRegex = /^((http[s]?|ftp|chrome-extension|file):\/\/)?\/?([^\/\.]+\.)*?([^\/\.]+\.[^:\/\s\.]{2,3}(\.[^:\/\s\.]‌​{2,3})?)(:\d+)?($|\/)([^#?\s]+)?(.*?)?(#[\w\-]+)?$/
    
     return null unless @data[@currentTabId]?.maps?
@@ -103,7 +103,7 @@ class Redirect
       if @data[@currentTabId].isOn
         @start()
       else
-        @stop()
+        @_stop(@currentTabId)
 
   createRedirectListener: () ->
     (details) =>

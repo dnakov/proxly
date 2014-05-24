@@ -26,7 +26,7 @@ class LISTEN extends Config
     @local.listeners[message] = callback
 
   Ext: (message, callback) =>
-    show 'adding ext listener for ' + message
+    # show 'adding ext listener for ' + message
     @external.listeners[message] = callback
 
   _onMessageExternal: (request, sender, sendResponse) =>
@@ -34,13 +34,13 @@ class LISTEN extends Config
 
     _sendResponse = (whatever...) =>
       try
-        whatever.shift() if whatever[0] is null 
+        whatever.shift() if whatever[0] is null and whatever[1]?
         sendResponse.apply null,whatever
       catch e
         undefined # error because no response was requested from the MSG, don't care
       responseStatus.called = true
       
-    (show "<== GOT EXTERNAL MESSAGE == #{ @EXT_TYPE } ==" + _key) for _key of request
+    # (show "<== GOT EXTERNAL MESSAGE == #{ @EXT_TYPE } ==" + _key) for _key of request
     if sender.id isnt @EXT_ID and sender.constructor.name isnt 'Port'
       return false
 
@@ -54,13 +54,13 @@ class LISTEN extends Config
     responseStatus = called:false
     _sendResponse = =>
       try
-        show 'calling sendresponse'
+        # show 'calling sendresponse'
         sendResponse.apply this,arguments
       catch e
-        show e
+        # show e
       responseStatus.called = true
 
-    (show "<== GOT MESSAGE == #{ @EXT_TYPE } ==" + _key) for _key of request
+    # (show "<== GOT MESSAGE == #{ @EXT_TYPE } ==" + _key) for _key of request
     @local.listeners[key]? request[key], _sendResponse for key of request
 
     unless responseStatus.called

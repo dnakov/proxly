@@ -24,15 +24,15 @@ app = root.app = new Application
   Storage: Storage
   FS: FileSystem
   
-app.Storage.retrieveAll(null)
+# app.Storage.retrieveAll(null)
 #   app.Storage.data[k] = data[k] for k of data
   
 chrome.tabs.onUpdated.addListener (tabId, changeInfo, tab) =>
-  if redir.data[tabId]?.isOn
-    app.mapAllResources () =>
-      chrome.tabs.setBadgeText 
-        text:Object.keys(app.currentFileMatches).length
-        tabId:tabId
+  # if redir.data[tabId]?.isOn
+  #   app.mapAllResources () =>
+  #     chrome.tabs.setBadgeText 
+  #       text:Object.keys(app.currentFileMatches).length
+  #       tabId:tabId
      
 
 

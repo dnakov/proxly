@@ -36,11 +36,12 @@ chrome.runtime.getBackgroundPage (win) ->
   ngapp.directive 'flipSwitch', () ->
     restrict:'AE',
     scope:
-      _model:'=boolModel',
-      id:"@identifier"
+      id:"@identifier",
+      toggleThis:'&toggleThis'
+      _model:'=ngModel'
     template:'''
     <div class="onoffswitch">
-      <input type="checkbox" name="onoffswitch" id="{{id}}" class="onoffswitch-checkbox" ng-model="_model">
+      <input type="checkbox" name="onoffswitch" id="{{id}}" ng-model="_model" ng-change="toggleThis()" class="onoffswitch-checkbox">
       <label class="onoffswitch-label" for="{{id}}">
           <span class="onoffswitch-inner"></span>
           <span class="onoffswitch-switch"></span>
@@ -59,6 +60,8 @@ chrome.runtime.getBackgroundPage (win) ->
       patt = new RegExp(regex)
       out = []
       i = 0
+      
+      return unless input?
 
       while i < input.length
         out.push input[i]  if patt.test(input[i][field])

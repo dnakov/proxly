@@ -29,7 +29,7 @@ class FileSystem
 
   getFileEntry: (dirEntry, path, cb) ->
       dirEntry.getFile path, {}, (fileEntry) =>
-        return cb? null, fileEntry
+        cb? null, fileEntry
       ,(err) => cb? err
 
   # openDirectory: (callback) ->
@@ -45,10 +45,12 @@ class FileSystem
           # Storage.save 'directories', @scope.directories (result) ->
 
   getLocalFileEntry: (dir, filePath, cb) => 
-    chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
-      dirEntry.getFile filePath, {}, (fileEntry) =>
-        return cb? null, fileEntry
-      ,(err) => cb? err
+    dirEntry = chrome.fileSystem.restoreEntry dir.directoryEntryId, () ->
+    if not dirEntry?
+      chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+        @getFileEntry dirEntry, filePath, cb
+    else
+      @getFileEntry dirEntry, filePath, cb
 
 
 

@@ -30,6 +30,10 @@ class Application extends Config
       if typeof deps[prop] is "function" 
         @[prop] = @wrapObjOutbound new deps[prop]
 
+    @Storage.onDataLoaded = (data) =>
+      @data = data
+      @data.server = status:@Server.status
+
     @Notify ?= (new Notification).show 
     # @Storage ?= @wrapObjOutbound new Storage @data
     # @FS = new FileSystem 
@@ -57,12 +61,8 @@ class Application extends Config
     @init()
 
   init: () ->
-    # @Storage.init() if @Storage?
-    @data.server ?=
-      host:"127.0.0.1"
-      port:8089
-      isOn:false
-    @data.currentFileMatches ?= {}
+    # @Storage.retrieveAll() if @Storage?
+
 
   getCurrentTab: (cb) ->
     # tried to keep only activeTab permission, but oh well..
@@ -102,22 +102,13 @@ class Application extends Config
     @getCurrentTab (tabId) =>
       chrome.tabs.executeScript tabId, 
         file:'scripts/content.js', (results) =>
-          @data.currentResources = []
+          @data.currentResources.length = 0
           for r in results
             for res in r
               @data.currentResources.push res
           cb? null, @data.currentResources
 
-  # updateResourcesListener: (resources) =>
-  #     show resources
-  #     _resources = []
 
-  #     for frame in resources 
-  #       do (frame) =>
-  #         for item in frame 
-  #           do (item) =>
-  #             _resources.push item
-  #     @Storage.save 'currentResources', resources
   getLocalFile: (info, cb) =>
     filePath = info.uri
     # filePath = @getLocalFilePathWithRedirect url
@@ -131,51 +122,28 @@ class Application extends Config
         cb? null,fileEntry,file
       ,(err) => cb? err
 
-    # dirName = info.uri
 
-    # dirName = dirName.match(/(\/.*?\/)|(\\.*?\\)/)?[0] || ''
-    # dirName = dirName.substring 0, dirName.length - 1
-    # show 'looking for ' + dirName
-    # _maps = {}
-    # _maps[item.directory] = item.isOn for item in @data.maps
+  startServer: (cb) ->
+    if @Server.status.isOn is false
+      @Server.start null,null,null, (err, socketInfo) =>
+          if err?
+            @Notify "Server Error","Error Starting Server: #{ error }"
+            cb? err
+          else
+            @Notify "Server Started", "Started Server #{ @Server.status.url }"
+            cb? null, @Server.status
 
-    # for k, dir of @data.directories when _maps[k]
-    #   show 'in loop' + dir.relPath
-    #   if dir.relPath is dirName then foundDir = dir
-
-    # if foundDir?
-    #   show 'found! ' + foundDir
-    #   @FS.getLocalFile foundDir, filePath, cb, err
-    # else
-    #   show 'dunno, not found'
-    #   err()
-
-  startServer: (cb, err) ->
-      if @Server.stopped is true
-          @Server.start @data.server.host,@data.server.port,null, (socketInfo) =>
-              @data.server.url = 'http://' + @data.server.host + ':' + @data.server.port + '/'
-              @data.server.isOn = true
-              @Notify "Server Started", "Started Server http://#{ @data.server.host }:#{@data.server.port}"
-              cb?()
-          ,(error) =>
-              @Notify "Server Error","Error Starting Server: #{ error }"
-              @data.server.url = 'http://' + @data.server.host + ':' + @data.server.port + '/'
-              @data.server.isOn = true
-              err?()
-
-  stopServer: (cb, err) ->
-      @Server.stop (success) =>
-          @Notify 'Server Stopped', "Server Stopped"
-          @data.server.url = ''
-          @data.server.isOn = false
-          cb?()
-      ,(error) =>
-          err?()
+  stopServer: (cb) ->
+      @Server.stop (err, success) =>
+        if err?
           @Notify "Server Error","Server could not be stopped: #{ error }"
+          cb? err
+        else
+          @Notify 'Server Stopped', "Server Stopped"
+          cb? null, @Server.status
 
   restartServer: ->
-    @stopServer () =>
-      @startServer()
+    @startServer()
 
   changePort: =>
   getLocalFilePathWithRedirect: (url) ->
@@ -218,7 +186,7 @@ class Application extends Config
         fileEntry: chrome.fileSystem.retainEntry fileEntry
         filePath: filePath
         directory: directory
-      cb?(@data.currentFileMatches[filePath], directory)
+      cb? null, @data.currentFileMatches[filePath], directory
       
 
 
@@ -246,15 +214,14 @@ class Application extends Config
           @findFileForPath dirs, path.replace(/.*?\//, ''), cb
       else
         cb? null, fileEntry, directory
-
-
   
   mapAllResources: (cb) ->
     @getResources =>
       for item in @data.currentResources
         localPath = @URLtoLocalPath item.url
-        @getFileMatch localPath, (err, success) =>
-          cb? null, 'done'
+        if localPath?
+          @getFileMatch localPath, (err, success) =>
+              cb? null, 'done' unless err?
 
 
 module.exports = Application

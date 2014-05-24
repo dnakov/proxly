@@ -29,14 +29,14 @@ class ProxlyCtrl extends @BaseCtrl
 
     @data = @app.Storage.data
 
-    @$scope.server = @data.server
-
+    @$scope.server = @app.data.server.status
+    # @$scope.data = @app.data
     @$scope.maps = @data.maps 
-    @$scope.currentResources = @data.currentResources 
-    @$scope.resources = @data.resources ?= {}
     @$scope.directories = @data.directories 
     @$scope.save = @save
     @$scope.resourceMap = @resourceMap = []
+    @$scope.currentResources = @app.data.currentResources
+    @$scope.currentResources ?= []
     # @$scope.getResources = @getResources
     @$scope.urlFilter = @urlFilter = 'resource'
     # @$scope.findMatches = @findMatches
@@ -105,7 +105,9 @@ class ProxlyCtrl extends @BaseCtrl
 
   refreshCurrentResources: () ->
     @app.getResources (currentResources) =>
-      @$scope.currentResources = @data.currentResources = currentResources
+      show 'got res'
+      show currentResources
+      @$scope.currentResources = currentResources
       @$scope.$apply()
 
   newDirectory: () ->
@@ -177,7 +179,7 @@ class ProxlyCtrl extends @BaseCtrl
     @sce.trustAsHtml text
 
   toggleServer: () ->
-    if @app.data.server.isOn
+    if @$scope.server.isOn
       @app.stopServer =>
         @$scope.$apply()
     else

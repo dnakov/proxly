@@ -10,16 +10,34 @@ root = exports ? this
 app = null
 
 class PopupCtrl extends ProxlyCtrl
+  currentTab:{}
+  currentTabId:{}
+
+  constructor: ->
+    super
+    @currentTabId
+    chrome.tabs.query
+      active:true
+      currentWindow:true
+    ,(tabs) =>
+      @currentTab = tabs[0]
+      @app.Redirect.currentTabId = @currentTab.id
+      @app.currentTabId = @currentTab.id
+
   toggleItem: (item) =>
     _maps = []
     # item.isOn = !item.isOn
     _maps.push _item for _item in @$scope.maps when _item.isOn
+    
+    @app.Redirect
+    .tab @currentTab.id 
+    .withMaps @app.data.maps
 
     @app.mapAllResources () =>
       @app.Redirect
-      .tab @currentTab.id
+      # .tab @currentTab.id
       .withPrefix 'http://' + @app.data.server.host + ':' + @app.data.server.port + '/'
-      .withMaps app.data.maps
+      .withMaps @app.data.maps
       .toggle()
 
 #     # @app.startServer() unless @data.server?.isOn
@@ -259,7 +277,14 @@ chrome.runtime.getBackgroundPage (win) =>
     angular.module('redir-popup')
   catch e
 
-    window.app = win.app if win?.app?
+    # window.app = win.app if win?.app?
+    found = false
+    for dir in win.app.data.directories
+      if dir.directoryEntryId?
+        found = true
+        break
+
+    return win.app.openApp() unless found and win.app.data.maps?.length > 0
 
     nghighlight = angular.module("ui.highlight", []).filter "highlight", ->
       (text, search, caseSensitive) ->

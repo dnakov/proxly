@@ -100,7 +100,9 @@ border-color: #004C97;
 .resource-footer .bar {
 
 }
-
+.proxly-nav-top {
+  border-top:none;
+}
 .resource-list {
 
 }
@@ -378,7 +380,7 @@ ng\:form {
 .bs-callout {
   margin: 20px 0;
   padding: 20px;
-  border-left: 3px solid #eee;
+  border-left: 3px solid #d9534f;
 }
 .bs-callout-danger h4 {
   color: #d9534f;

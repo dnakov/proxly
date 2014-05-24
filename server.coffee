@@ -2,47 +2,57 @@
 class Server
   socket: chrome.socket
   # tcp: chrome.sockets.tcp
-  host:"127.0.0.1"
-  port:8089
-  maxConnections:500
   socketProperties:
       persistent:true
       name:'SLRedirector'
-  socketInfo:null
+  # socketInfo:null
   getLocalFile:null
   socketIds:[]
-  stopped:true
+  status:
+    host:null
+    port:null
+    maxConnections:50
+    isOn:false
+    socketInfo:null
+    url:null
 
   constructor: () ->
+    @status.host = "127.0.0.1"
+    @status.port = 10012
+    @status.maxConnections = 50
+    @status.url = 'http://' + @status.host + ':' + @status.port + '/'
+    @status.isOn = false
 
-  start: (host,port,maxConnections, cb,err) ->
-    @host = if host? then host else @host
-    @port = if port? then port else @port
-    @maxConnections = if maxConnections? then maxConnections else @maxConnections
 
-    @killAll (success) =>
+  start: (host,port,maxConnections, cb) ->
+    if host? then @status.host = host
+    if port? then @status.port = port
+    if maxConnections? then @status.maxConnections = maxConnections
+
+    @killAll (err, success) =>
+      return cb? err if err?
+
+      @status.isOn = false
       @socket.create 'tcp', {}, (socketInfo) =>
+        @status.socketInfo = socketInfo
         @socketIds = []
-        @socketIds.push socketInfo.socketId
+        @socketIds.push @status.socketInfo.socketId
         chrome.storage.sync.set 'socketIds':@socketIds
-        @socket.listen socketInfo.socketId, @host, @port, (result) =>
+        @socket.listen @status.socketInfo.socketId, @status.host, @status.port, (result) =>
           if result > -1
-            show 'listening ' + socketInfo.socketId
-            @stopped = false
-            @socketInfo = socketInfo
-            @socket.accept socketInfo.socketId, @_onAccept
-            cb? socketInfo
+            show 'listening ' + @status.socketInfo.socketId
+            @status.isOn = true
+            @socket.accept @status.socketInfo.socketId, @_onAccept
+            cb? null, @status
           else
-            err? result
-    ,err?
+            cb? result
 
 
-  killAll: (callback, error) ->
+  killAll: (cb) ->
     chrome.storage.sync.get 'socketIds', (result) =>
-      show 'got ids'
-      show result
       @socketIds = result.socketIds
-      return callback?() unless @socketIds?
+      @status.isOn = false
+      return cb? null, 'success' unless @socketIds?
       cnt = 0
       for s in @socketIds
         do (s) =>
@@ -50,18 +60,17 @@ class Server
           @socket.getInfo s, (socketInfo) =>
             cnt--
             if not chrome.runtime.lastError?
-              @socket.disconnect s
+              @socket.disconnect s if socketInfo.connected
               @socket.destroy s
 
-            callback?() if cnt is 0
+            cb? null, 'success' if cnt is 0
 
-
-  stop: (callback, error) ->
-    @killAll (success) =>
-      @stopped = true
-      callback?()
-    ,(error) =>
-      error? error
+  stop: (cb) ->
+    @killAll (err, success) =>
+      if err? 
+        cb? err
+      else
+        cb? null,success
 
 
   _onReceive: (receiveInfo) =>
