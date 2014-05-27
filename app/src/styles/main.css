@@ -123,9 +123,13 @@ border-color: #004C97;
     /*color: #FFF !important;*/
 }
 .proxly-image {
-  position:absolute;top:0px;left:0px;z-index:9000000;
-  width:28px;
-  height:28px;
+  /*top:0px;left:0px;z-index:9000000;*/
+  background: url(../images/icon-38.png) no-repeat left center;
+  /*width:28px;*/
+  /*height:28px;*/
+}
+.proxly-image span {
+  margin-left:30px;
 }
 .proxly-folder span.glyphicon {
   font-size: 24px;

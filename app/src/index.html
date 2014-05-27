@@ -16,7 +16,7 @@
 <body ng-controller="ProxlyCtrl" ng-cloak id="">
   <div id="main-container">
     <div class="container-fluid">
-        <img src="images/icon-38.png" class="proxly-image" style="" />
+        
         <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default navbar-fixed-top proxly-nav-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
@@ -26,7 +26,7 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a style="" href="#" class="navbar-brand">
+                    <a style="" href="#" class="navbar-brand proxly-image">
                         <span class="proxly-name">Proxly</span>
                     </a>
 
@@ -103,7 +103,8 @@
         </div>
         <div class="bs-callout bs-callout-danger" ng-show="navIsRedirect==false && (directories == null || directories.length == 0)">
             <h4>No directories have been added</h4>
-            <p>Drag and drop a directory in here</p>
+            <p>Click the button to add a directory in here.<br>
+            Drag and Drop is experimental, it will probably eat your memory and crash</p>
         </div>
         <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
@@ -234,7 +235,7 @@
                 
     <div class="dropper"><span class="glyphicon glyphicon-folder-open glyphicon-align-center"></span></div>
     <script src="scripts/index.bundle.js"></script>
-    <script src="scripts/livereload.js"></script>
+    <!-- <script src="scripts/livereload.js"></script> -->
 </body>
 
 </html>
