@@ -30,6 +30,7 @@ class PopupCtrl extends ProxlyCtrl
       @app.tabMaps[@currentTabId] ?= {}
       @app.tabMaps[@currentTabId].maps ?= angular.copy @app.data.maps || []
       @$scope.maps = @app.tabMaps[@currentTabId].maps
+      @$scope.$apply()
 
 
   toggleItem: (item) =>
@@ -45,13 +46,18 @@ class PopupCtrl extends ProxlyCtrl
     @app.mapAllResources () =>
       isOn = @app.Redirect
       # .tab @currentTab.id
-      .withPrefix @app.data.server.status.url
+      .withPrefix @app.Storage.session.server.status.url
       .withMaps @$scope.maps
       .toggle()
-
-      chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
-        if isOn then @app.setBadgeText null, @currentTab.id
-        else @app.removeBadgeText @currentTab.id
+      if isOn 
+        @app.startServer () =>
+          chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
+            @app.setBadgeText null, @currentTab.id
+            window.close();
+      else
+        chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
+          @app.removeBadgeText @currentTab.id
+          window.close();
 
 
 chrome.runtime.getBackgroundPage (win) =>

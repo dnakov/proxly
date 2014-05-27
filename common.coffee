@@ -36,9 +36,6 @@ class Application extends Config
       # @Storage.data.server = {}
       # delete @Storage.data.server.status
 
-      @Storage.session.server = {}
-      @Storage.session.server.status = @Server.status
-
       if not @Storage.data.firstTime?
         @Storage.data.firstTime = false
         @Storage.data.maps.push
@@ -77,7 +74,8 @@ class Application extends Config
     @init()
 
   init: () ->
-
+      @Storage.session.server = {}
+      @Storage.session.server.status = @Server.status
     # @Storage.retrieveAll() if @Storage?
 
 
@@ -149,6 +147,8 @@ class Application extends Config
           else
             @Notify "Server Started", "Started Server #{ @Server.status.url }"
             cb? null, @Server.status
+    else
+      cb? 'already started'
 
   stopServer: (cb) ->
       @Server.stop (err, success) =>

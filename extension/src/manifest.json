@@ -1,6 +1,6 @@
 {
     "name": "Proxly Extension",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "manifest_version": 2,
     "description": "Proxly Extension",
     "icons": {
@@ -35,5 +35,4 @@
         "webRequestBlocking",
         "\u003Call_urls\u003E"
     ]
-,"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiyfwd2/c9T1rFdJRme7Rwcx4/vx9356LJ40QqpxY4Fz9SQ/2UkqzOmXcEbw/azzowQX5tUG6OlxCJiioTLqhGORQAXp+rceGIRgDXfoL1LkctB/O6LNRpwg208IHgBe8i2rN23APhQnQa9KI6sjnqkBZL6Y5G6LzAClHhSGbhabmRcLLHlfw1g9a0LZ8WAUCA1Zf+hJFPzMWs/CxfL+tYJpPY5e7VATYkdEK06HZhL8Ixp7mKOp6Q++WouOqUQ2ez1RfK5CS4iDAIbuOVGoVwJ8TsScRr8JcRQvN9yBhiPr63tN+9FfDczEe/eUxbDQdqZTuJzgUGFkTb1sCvp/8DwIDAQAB"      
 }

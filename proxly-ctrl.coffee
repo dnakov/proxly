@@ -46,7 +46,7 @@ class ProxlyCtrl extends @BaseCtrl
     # @$scope.setCurrentFilter = @setCurrentFilter
     # @$scope.trustAsResourceUrl = @trustAsResourcUrl
     @$scope.urls = {}
-    @$scope.serverCheckbox = @app.Server.status.isOn
+    @$scope.serverCheckbox = @$scope.server.isOn
     @$scope.$watch 'server.isOn', (newValue, oldValue) =>
       @$scope.serverCheckbox = newValue
 
