@@ -24,6 +24,17 @@ class Application extends Config
     @MSG ?= MSG.get()
     @LISTEN ?= LISTEN.get()
     
+    chrome.runtime.onConnectExternal.addListener (port) =>
+      if port.sender.id isnt @EXT_ID
+        return false
+
+      @MSG.setPort port
+      @LISTEN.setPort port
+    
+    port = chrome.runtime.connect @EXT_ID 
+    @MSG.setPort port
+    @LISTEN.setPort port
+    
     for prop of deps
       if typeof deps[prop] is "object" 
         @[prop] = @wrapObjInbound deps[prop]
@@ -68,9 +79,6 @@ class Application extends Config
     @getResources = @wrap @, 'Application.getResources', @getResources
     @getCurrentTab = @wrap @, 'Application.getCurrentTab', @getCurrentTab
 
-    chrome.runtime.getPlatformInfo (info) =>
-      @platform = info
-
     @init()
 
   init: () ->
@@ -89,11 +97,12 @@ class Application extends Config
       cb? @currentTabId
 
   launchApp: (cb, error) ->
-      chrome.management.launchApp @APP_ID, (extInfo) =>
-        if chrome.runtime.lastError
-          error chrome.runtime.lastError
-        else
-          cb? extInfo
+    # needs management permission. off for now.
+    chrome.management.launchApp @APP_ID, (extInfo) =>
+      if chrome.runtime.lastError
+        error chrome.runtime.lastError
+      else
+        cb? extInfo
 
   openApp: () =>
       chrome.app.window.create('index.html',
@@ -118,6 +127,9 @@ class Application extends Config
       chrome.tabs.executeScript tabId, 
         file:'scripts/content.js', (results) =>
           @data.currentResources.length = 0
+          
+          return cb?(null, @data.currentResources) if not results?
+
           for r in results
             for res in r
               @data.currentResources.push res
@@ -142,7 +154,7 @@ class Application extends Config
     if @Server.status.isOn is false
       @Server.start null,null,null, (err, socketInfo) =>
           if err?
-            @Notify "Server Error","Error Starting Server: #{ error }"
+            @Notify "Server Error","Error Starting Server: #{ err }"
             cb? err
           else
             @Notify "Server Started", "Started Server #{ @Server.status.url }"
@@ -294,7 +306,7 @@ class Application extends Config
           # show error
           # onerror error, results if todo is 0 
 
-      console.log dive dirEntry, @results  
+      # console.log dive dirEntry, @results  
 
 
 module.exports = Application

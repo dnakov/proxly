@@ -6,8 +6,10 @@ class FileSystem
   retainedDirs: {}
   LISTEN: LISTEN.get() 
   MSG: MSG.get()
+  platform:''
   constructor: () ->
-
+    chrome.runtime.getPlatformInfo (info) =>
+      @platform = info
   # @dirs: new DirectoryStore
   # fileToArrayBuffer: (blob, onload, onerror) ->
   #   reader = new FileReader()
@@ -18,6 +20,7 @@ class FileSystem
   #   reader.readAsArrayBuffer blob
 
   readFile: (dirEntry, path, cb) ->
+    # path = path.replace(/\//g,'\\') if platform is 'win'
     @getFileEntry dirEntry, path,
       (err, fileEntry) =>
         
@@ -28,9 +31,10 @@ class FileSystem
         ,(err) => cb? err
 
   getFileEntry: (dirEntry, path, cb) ->
-      dirEntry.getFile path, {}, (fileEntry) =>
-        cb? null, fileEntry
-      ,(err) => cb? err
+    # path = path.replace(/\//g,'\\') if platform is 'win'
+    dirEntry.getFile path, {}, (fileEntry) =>
+      cb? null, fileEntry
+    ,(err) => cb? err
 
   # openDirectory: (callback) ->
   openDirectory: (directoryEntry, cb) ->
@@ -45,6 +49,7 @@ class FileSystem
           # Storage.save 'directories', @scope.directories (result) ->
 
   getLocalFileEntry: (dir, filePath, cb) => 
+    # filePath = filePath.replace(/\//g,'\\') if platform is 'win'
     dirEntry = chrome.fileSystem.restoreEntry dir.directoryEntryId, () ->
     if not dirEntry?
       chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>

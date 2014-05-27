@@ -33,5 +33,5 @@ resources = [].map.call document.querySelectorAll('script[src],link[href]'), (e)
         extension: url.match(/\.([^\.]*$)/)?[1]
       .filter (e) ->
           if e.url?.match('^https?|http?|chrome-extension|file:\/\/.*')? then true else false
-console.log resources
+# console.log resources
 return resources

@@ -5,13 +5,14 @@ class MSG extends Config
   port:null
   constructor: ->
     super
-    @port = chrome.runtime.connect @EXT_ID 
 
   @get: () ->
     instance ?= new MSG
 
   @createPort: () ->
 
+  setPort: (port) ->
+    @port = port
 
   Local: (message, respond) ->
     (show "== MESSAGE #{ _key } ==>") for _key of message
@@ -23,7 +24,8 @@ class MSG extends Config
     try
       @port.postMessage message
     catch
-      @port = chrome.runtime.connect @EXT_ID 
-      @port.postMessage message
+      show 'error'
+      # @port = chrome.runtime.connect @EXT_ID 
+      # @port.postMessage message
 
 module.exports = MSG

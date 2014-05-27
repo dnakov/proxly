@@ -25,14 +25,6 @@ class Config
         
         return f.apply _klas, arguments
 
-        # args = []
-        # if args.arguments?.length is 0
-        #   args.push null
-        # else
-        #   args = _arguments
-        # _args = args[0]?.push(args[1])
-        #f.apply _klas, args
-
   wrapObjInbound: (obj) ->
     (obj[key] = @wrapInbound obj, obj.constructor.name + '.' + key, obj[key]) for key of obj when typeof obj[key] is "function"
     obj

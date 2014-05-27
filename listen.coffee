@@ -12,15 +12,16 @@ class LISTEN extends Config
   instance = null
   constructor: ->
     super
-    
-    chrome.runtime.onConnectExternal.addListener (port) =>
-      port.onMessage.addListener @_onMessageExternal
 
     @local.api.addListener @_onMessage
     @external.api?.addListener @_onMessageExternal
 
   @get: () ->
     instance ?= new LISTEN
+
+  setPort: (port) ->
+    @port = port
+    port.onMessage.addListener @_onMessageExternal
 
   Local: (message, callback) =>
     @local.listeners[message] = callback
@@ -42,8 +43,9 @@ class LISTEN extends Config
       responseStatus.called = true
       
     # (show "<== GOT EXTERNAL MESSAGE == #{ @EXT_TYPE } ==" + _key) for _key of request
-    if sender.id isnt @EXT_ID and sender.constructor.name isnt 'Port'
-      return false
+    if sender.id? 
+      if sender.id isnt @EXT_ID #and sender.constructor.name isnt 'Port'
+        return false
 
     @external.listeners[key]? request[key], _sendResponse for key of request
     

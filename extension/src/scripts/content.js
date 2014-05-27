@@ -26,8 +26,6 @@
     }
   });
 
-  console.log(resources);
-
   return resources;
 
 }).call(this);
