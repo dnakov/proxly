@@ -29,7 +29,7 @@ class ProxlyCtrl extends @BaseCtrl
 
     @data = @app.Storage.data
 
-    @$scope.server = @app.data.server.status
+    @$scope.server = @app.Storage.session.server.status
     # @$scope.data = @app.data
     @$scope.maps = @data.maps 
     @$scope.directories = @data.directories 
@@ -46,22 +46,13 @@ class ProxlyCtrl extends @BaseCtrl
     # @$scope.setCurrentFilter = @setCurrentFilter
     # @$scope.trustAsResourceUrl = @trustAsResourcUrl
     @$scope.urls = {}
-    # @$scope.newMapping = @newMapping
-    # @$scope.newDirectory = @newDirectory
-    # @$scope.deleteDirectory = @deleteDirectory
-    # @$scope.getHtmlSafe = @getHtmlSafe
-    # @$scope.setLocalPath = @setLocalPath
-    # @$scope.toggleServer = @toggleServer
-    # @$scope.deleteMapping = @deleteMapping
-    # @$scope.setCurrent = @setCurrentunless
-    # @$scope.refreshCurrentResources = @refreshCurrentResources
-    # @$scope.changePort = @changePort
-    # @$scope.onDrop = @onDrop
-    # @$scope.toggleItem = @toggleItem
-    # @$scope.getClass = @getClass
-    # @$scope.newItem = @newItem
-    @$scope.currentFileMatches = @data.currentFileMatches
+    @$scope.serverCheckbox = @app.Server.status.isOn
+    @$scope.$watch 'server.isOn', (newValue, oldValue) =>
+      @$scope.serverCheckbox = newValue
 
+    @$scope.currentFileMatches = @data.currentFileMatches
+    @$scope.$watch 'currentFilter', (newValue, oldValue) =>
+      @$scope.setLocalPath newValue
     @dnd = new @dndFile 'html', @onDrop if @dndFile?
     # $document.on 'dragenter', @onDrop
 
@@ -95,7 +86,7 @@ class ProxlyCtrl extends @BaseCtrl
       delete dir.entry
       dir.pathName = pathName
       dir.isOn = true
-      @data.directories.unshift dir
+      @data.directories.push dir
       @$scope.$apply()
 
   # save: (close) ->
@@ -104,7 +95,7 @@ class ProxlyCtrl extends @BaseCtrl
   #     # @app.Storage.set resourceMap:@$scope.resourceMap
 
   refreshCurrentResources: () ->
-    @app.getResources (currentResources) =>
+    @app.getResources (err, currentResources) =>
       show 'got res'
       show currentResources
       @$scope.currentResources = currentResources
@@ -117,14 +108,15 @@ class ProxlyCtrl extends @BaseCtrl
   newMapping: (item) ->
     newItem = if item? then angular.copy(item) else {}
     newItem.isRedirect = true
+    newItem.isOn = false
     newItem.url = newItem.regexRepl = '' 
-    @data.maps.unshift newItem
+    @data.maps.push newItem
     newItem.name = 'Redirect ' + @data.maps.length
     # @openDirectory newItem, (pathName, dir) =>
     #   newItem.name = pathName.match(/[^\/]+$/)?[0]
     #   newItem.directory = pathName
     #   @setLocalPath newItem
-    #   @data.maps.unshift newItem      
+    #   @data.maps.push newItem      
     #   @$scope.currentFilter = item
     #   @$scope.$apply()
 
@@ -147,17 +139,20 @@ class ProxlyCtrl extends @BaseCtrl
       @$scope.$apply()
       return 
     
-    @$scope.currentFilter = angular.copy item unless item.regexIsWrong
-
-    for resource in @$scope.filteredResources
-      resource.localPath = resource.url.replace(reg, item.regexRepl)
-      _dirs = [] 
-      _dirs.push dir for dir in @$scope.directories when dir.isOn
-      @app.getFileMatch resource.localPath, (err, fileMatch, directory) => 
-        return if err? 
-        for res in @$scope.filteredResources when res.localPath is fileMatch.filePath
-          res.localFile = directory.pathName + '/' + res.localPath
-        @$scope.$apply()
+    # @$scope.currentFilter = angular.copy item unless item.regexIsWrong
+    if @$scope.filteredResources?
+      for resource in @$scope.filteredResources
+        resource.localPath = resource.url.replace(reg, item.regexRepl)
+        _dirs = [] 
+        _dirs.push dir for dir in @$scope.directories when dir.isOn
+        @app.getFileMatch resource.localPath, (err, fileMatch, directory) => 
+          if err?             
+            for res in @$scope.filteredResources when res is resource
+              res.localFile = ''
+          else
+            for res in @$scope.filteredResources when res.localPath is fileMatch.filePath
+              res.localFile = directory.pathName + '/' + res.localPath
+          @$scope.$apply()
 
 
   openDirectory: (cb) ->
@@ -169,11 +164,12 @@ class ProxlyCtrl extends @BaseCtrl
         dir.isOn = true    
         # can't save circular blah blah
         delete dir.entry
-        @data.directories.unshift dir
+        @data.directories.push dir
         cb?(pathName,dir)
 
   setCurrentFilter: (item) ->
-    @currentFilter = angular.copy item
+    @$scope.currentFilter = angular.copy item
+
 
   getHtmlSafe: (text) ->
     @sce.trustAsHtml text

@@ -1,8 +1,5 @@
 class Redirect
-  data:
-    tabId:
-      listener:null
-      isOn:false
+  data:{}
   
   prefix:null
   currentMatches:{}
@@ -21,7 +18,11 @@ class Redirect
   getLocalFilePathWithRedirect: (url) =>
     filePathRegex = /^((http[s]?|ftp|chrome-extension|file):\/\/)?\/?([^\/\.]+\.)*?([^\/\.]+\.[^:\/\s\.]{2,3}(\.[^:\/\s\.]‌​{2,3})?)(:\d+)?($|\/)([^#?\s]+)?(.*?)?(#[\w\-]+)?$/
    
-    return null unless @data[@currentTabId]?.maps?
+    _maps = []
+    if @data[@currentTabId]?
+      _maps.push map for map in @data[@currentTabId].maps when map.isOn
+    
+    return null unless _maps.length > 0
 
     resPath = url.match(filePathRegex)?[8]
     if not resPath?
@@ -30,7 +31,7 @@ class Redirect
 
     return null unless resPath?
     
-    for map in @data[@currentTabId].maps
+    for map in _maps
       resPath = url.match(new RegExp(map.url))? and map.url?
 
       if resPath
@@ -72,7 +73,7 @@ class Redirect
       chrome.webRequest.onBeforeRequest.removeListener @data[@currentTabId].listener
 
     @data[@currentTabId].listener = @createRedirectListener()
-    @data[@currentTabId].isOn = true
+    # @data[@currentTabId].isOn = true
     @_start @currentTabId
 
   killAll: () ->
@@ -97,18 +98,27 @@ class Redirect
       cb? @currentTabId
 
   toggle: () ->
-    if @data[@currentTabId]
-      @data[@currentTabId].isOn = !@data[@currentTabId].isOn
+    isOn = false
+    if @data[@currentTabId]?.maps?
+      for m in @data[@currentTabId]?.maps
+        if m.isOn
+          isOn = true
+          break
+        else
+          isOn = false
+      # @data[@currentTabId].isOn = !@data[@currentTabId].isOn
       
-      if @data[@currentTabId].isOn
+      if isOn
         @start()
       else
         @_stop(@currentTabId)
 
+      return isOn
+
   createRedirectListener: () ->
     (details) =>
       path = @getLocalFilePathWithRedirect details.url
-      if path?
+      if path? and path.indexOf @prefix is -1
         return redirectUrl:@prefix + path
       else
         return {} 

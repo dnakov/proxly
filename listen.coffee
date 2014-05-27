@@ -34,8 +34,9 @@ class LISTEN extends Config
 
     _sendResponse = (whatever...) =>
       try
-        whatever.shift() if whatever[0] is null and whatever[1]?
-        sendResponse.apply null,whatever
+        # whatever.shift() if whatever[0] is null and whatever[1]?
+        sendResponse.apply null,proxyArgs = [isProxy:whatever]
+
       catch e
         undefined # error because no response was requested from the MSG, don't care
       responseStatus.called = true

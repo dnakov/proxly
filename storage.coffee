@@ -1,7 +1,8 @@
 LISTEN = require './listen.coffee'
 MSG = require './msg.coffee'
 # window.Observable = require './observe.coffee'
-window.Observable = require 'observed'
+require 'Object-observe-polyfill'
+Observable = require 'observed'
 
 class Storage
   api: chrome.storage.local
@@ -11,7 +12,12 @@ class Storage
     currentResources: []
     directories:[]
     maps:[]
+    tabMaps:{}
     currentFileMatches:{}
+  
+  session:{}
+
+  onDataLoaded: ->
 
   callback: () ->
   notifyOnChange: () ->
@@ -19,53 +25,72 @@ class Storage
     @onDataLoaded = _onDataLoaded if _onDataLoaded?
     @api.get (results) =>
       @data[k] = results[k] for k of results
-      @observer = Observable @data
-      @observer.on 'change', (change) =>
-        @api.set @data
-        @MSG.ExtPort 'dataChanged':change 
 
-      @LISTEN.Ext 'dataChanged', (change) =>
-        @data ?= {}
-        _data = @data
+      watchAndNotify @,'dataChanged', @data, true
+
+      @onDataLoaded @data
+
+    @init()
+
+  init: () ->
+    watchAndNotify @,'sessionData', @session, false
+    # @retrieveAll()
+
+  
+  isArray: -> 
+    Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
+
+  watchAndNotify = (_this, msgKey, obj, store) ->
+      _this.observer = Observable obj
+      _this.observer.on 'change', (change) ->
+        # if change.name is 'length'          
+        #   path = change.path.split('^^')
+        #   saveArr = Array.prototype.slice.call(change.object[path[0]]) 
+        #   change.object[path[0]].length = 0
+        #   setTimeout () ->
+        #     change.object[path[0]] = saveArr
+        show change
+        _this.api.set obj if store
+        msg = {}
+        msg[msgKey] = change
+        _this.MSG.ExtPort msg
+
+      isArray = Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
+
+      _this.LISTEN.Ext msgKey, (change) ->
+        show change
+        obj ?= {}
         # show 'data changed '
         # show change
-        # return if @isArray(change.object)
+        # return if _this.isArray(change.object)
 
-        @observer.stop()
-        ((data, api) ->
+        ((data, api, observer) ->
           stack = change.path.split '^^'
 
           return data[stack[0]] = change.value if not data[stack[0]]?
 
-          while stack.length > 1 
+          while stack.length > 0 
             _shift = stack.shift()
-            if /^\d+$/.test _shift then _shift = parseInt _shift
-            data = data[_shift] 
+            
+            if stack.length > 0 and isArray(data[_shift]) and change.name is stack[0]
+              newArr = Array.prototype.slice.call(change.object)
+              # Observable newArr
+              data[_shift] = newArr
+              return
 
-          _shift = stack.shift()
-          if /^\d+$/.test _shift then _shift = parseInt _shift
+            if /^\d+$/.test _shift 
+              _shift = parseInt _shift
+              # else if change.type is 'update' and change.name is 'length'
+
+            data = data[_shift] unless stack.length is 0
+
+          paused = observer.pause data
           data[_shift] = change.value
-        )(@data, @api)
 
-        # change.path = change.path.replace(/\.(\d+)\./g, '[$1].') if @isArray change.object
-        
-        
-        
-        @observer = Observable @data
-        @observer.on 'change', (change) =>
-          @api.set @data
-          @MSG.ExtPort 'dataChanged':change
-
-        # @onChangedAll()
-      # @retrieveAll()
-      @onDataLoaded @data
-
-  init: () ->
-    # @retrieveAll()
-
-  isArray: -> 
-    Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
-
+          setTimeout () ->
+              observer.resume paused
+          ,20  
+        )(obj, _this.api, _this.observer)    
 
   save: (key, item, cb) ->
 
@@ -101,14 +126,23 @@ class Storage
     # @observer.stop()
     @api.get (result) =>
       for c of result 
+      #   delete @data[c]
         @data[c] = result[c] 
+      # @data = result
         @MSG.ExtPort 'dataChanged':
           path:c
           value:result[c]
-      api.set @data
+      @observer = Observable @data
+      @observer.on 'change', (change) =>
+        if change.name isnt 'length'
+          show change
+          @api.set @data
+          @MSG.ExtPort 'dataChanged':change 
+
+      @api.set @data
       # @callback? result
       cb? result
-      show result
+      @onDataLoaded @data
 
       # @MSG.ExtPort 'dataChanged':
       # @observer = Observable @data

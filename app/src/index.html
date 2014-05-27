@@ -111,7 +111,7 @@
                     <div class="input-group proxly-name">
                         <div class="col-xs-2">
                             <div class="btn-group">
-                                <flip-switch ng-model="item.isOn" identifier="redir-{{$index}}"/>
+                                <!-- <flip-switch ng-model="item.isOn" identifier="redir-{{$index}}"/> -->
                                 <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
                                 <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
                             </div>
@@ -132,14 +132,14 @@
                 <div class="row" ng-show="item.isRedirect == true">
                     <div class="col-xs-6">
                         <span class="label label-default">Match</span>
-                        <input list="regex-url" ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+                        <input list="regex-url" ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
 <!--                         <datalist id="regex-url">
                             <option value="test"></option>
                         </datalist> -->
                     </div>
                     <div class="col-xs-6">
                         <span class="label label-default">Replace With</span>
-                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
+                        <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
                     </div>
                 </div>       
         </div>
@@ -187,7 +187,7 @@
                         <li><input ng-disabled="server.isOn" identifier="server" type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
                         <li>
                             <div class="btn-group" >
-                            <flip-switch ng-model="fakeakjsdfhaksjd" toggle-this="toggleServer()" identifier="server"/>
+                            <flip-switch ng-model="serverCheckbox" toggle-this="toggleServer()" identifier="server"/>
                             </div>
                         </li>
                         <li>
@@ -214,7 +214,7 @@
                                     </dd>
                                     <dt>Redirect</dt>
                                     <dd>
-                                        <span>http://{{server.host}}:{{server.port}}/{{res.localPath}}</span>
+                                        <span>{{server.url}}{{res.localPath}}</span>
                                     </dd>
                                     <dt>File</dt>
                                     <dd>

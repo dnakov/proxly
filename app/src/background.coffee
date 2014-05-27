@@ -37,7 +37,7 @@ root.app = new Application
   Server: new Server
 
 root.app.Server.getLocalFile = app.getLocalFile
-root.app.Storage.data.server = status:root.app.Server.status
+# root.app.Storage.data.server = status:root.app.Server.status
 
 chrome.runtime.onSuspend.addListener ->
   root.app.Storage.saveAll(null)

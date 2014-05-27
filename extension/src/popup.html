@@ -20,12 +20,7 @@
         <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default navbar-fixed-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
+                
                     <a style="" href="#" class="navbar-brand">
                         <span class="proxly-name">Proxly</span>
                     </a>
@@ -33,7 +28,7 @@
 
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav nav">
-                        <li ng-click="navIsRedirect=false" class="{{navIsRedirect ? '' : 'active'}}"><a href="#">Server</a></li>
+<!--                         <li ng-click="navIsRedirect=false" class="{{navIsRedirect ? '' : 'active'}}"><a href="#">Server</a></li> -->
                         <li ng-click="navIsRedirect=true" class="{{navIsRedirect ? 'active' : ''}}"><a href="#">Redirect</a></li>
                     </ul>
 
@@ -52,11 +47,11 @@
     </div>
     <div class="main-content container-fluid">
 
-        <div ng-show="navIsRedirect==false" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
+<!--         <div ng-show="navIsRedirect==false" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
                 <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="btn-group">
-                        <flip-switch bool-model="item.isOn" ng-click="toggleItem(item)" identifier="dir-{{$index}}"/>
+                        <flip-switch ng-model="item.isOn" ng-click="toggleItem(item)" identifier="dir-{{$index}}"/>
 
                         </div>
                         <input type="text" id="projectName" class="proxly-input project-name" ng-model="item.name"></input>
@@ -69,38 +64,26 @@
                     
                         <span class="glyphicon glyphicon-folder-open"></span>
                         <code>{{item.pathName}}</code>
-<!--                         <span class="input-group-btn">
-                            <button class="btn btn-info" ng-click="openDirectory(item)">Browse</button>
-                        </span> -->
+ 
                     </div>
                 </div>
-        </div>
+        </div> -->
         <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
                 <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="btn-group">
-                            <flip-switch bool-model="item.isOn"  ng-click="toggleItem(item)" identifier="redir-{{$index}}"/>
+                            <flip-switch ng-model="item['isOn']" ng-click="toggleItem(item)" identifier="redir-{{$index}}"/>
                             <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
                             <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
                         </div>
                         <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name"></input>
-                        <span class="input-group-btn">
+<!--                         <span class="input-group-btn">
                             <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
-                        </span>
+                        </span> -->
                     </div>
 
-
-<!--                 <div class="row" ng-show="item.isRedirect == true">
-                    <div class="col-xs-6">
-                        <span class="label label-default">Match</span>
-                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
-                    </div>
-                    <div class="col-xs-6">
-                        <span class="label label-default">Replace With</span>
-                        <input ng-focus="$parent.showResources=true" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
-                    </div>
-                </div>     -->   
+  
         </div>
     </div>
 
@@ -110,23 +93,20 @@
 
         <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom resources-nav res-show" ng-show="showResources" role="navigation">
             <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a style="" href="#" class="navbar-brand">
-                        <span class="proxly-name">http://{{server.host}}:{{server.port}}</span>
-                    </a>
-                </div>
-                <div class="collapse navbar-collapse">
+ 
+
+                 
+
                     <ul class="navbar-nav nav">
                 
                         <li>
+                                            <a style="" href="#" class="navbar-brand">
+                        <span class="proxly-name">http://{{server.host}}:{{server.port}}</span>
+                    </a>
+                    </li>
+                    <li>
                             <div class="btn-group" >
-                            <flip-switch bool-model="server.isOn" ng-click="toggleServer()" identifier="server"/>
+                            <flip-switch ng-model="serverCheckbox" toggle-this="toggleServer()" identifier="server"/>
 
                             </div>
                         </li>

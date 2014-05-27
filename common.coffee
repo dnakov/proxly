@@ -31,8 +31,25 @@ class Application extends Config
         @[prop] = @wrapObjOutbound new deps[prop]
 
     @Storage.onDataLoaded = (data) =>
-      @data = data
-      @data.server = status:@Server.status
+      # @data = data
+      # delete @Storage.data.server
+      # @Storage.data.server = {}
+      # delete @Storage.data.server.status
+
+      @Storage.session.server = {}
+      @Storage.session.server.status = @Server.status
+
+      if not @Storage.data.firstTime?
+        @Storage.data.firstTime = false
+        @Storage.data.maps.push
+          name:'Salesforce'
+          url:'https.*\/resource(\/[0-9]+)?\/([A-Za-z0-9\-._]+\/)?'
+          regexRepl:''
+          isRedirect:true
+          isOn:false
+
+
+      # if @Redirect? then @Redirect.data = @data.tabMaps
 
     @Notify ?= (new Notification).show 
     # @Storage ?= @wrapObjOutbound new Storage @data
@@ -47,7 +64,6 @@ class Application extends Config
     @startServer = @wrap @, 'Application.startServer', @startServer
     @restartServer = @wrap @, 'Application.restartServer', @restartServer
     @stopServer = @wrap @, 'Application.stopServer', @stopServer
-    # @mapAllResources = @wrap @, 'Application.mapAllResources', @mapAllResources
     @getFileMatch = @wrap @, 'Application.getFileMatch', @getFileMatch
 
     @wrap = if @SELF_TYPE is 'EXTENSION' then @wrapInbound else @wrapOutbound
@@ -61,6 +77,7 @@ class Application extends Config
     @init()
 
   init: () ->
+
     # @Storage.retrieveAll() if @Storage?
 
 
@@ -178,7 +195,7 @@ class Application extends Config
     @findFileForPath @data.directories, filePath, (err, fileEntry, directory) =>
 
       if err? 
-        show 'no files found for ' + filePath
+        # show 'no files found for ' + filePath
         return cb? err
 
       delete fileEntry.entry
@@ -197,8 +214,7 @@ class Application extends Config
 
     @FS.getLocalFileEntry _dir, _path, (err, fileEntry) =>
       if err?
-        _dir = myDirs.shift()
-        if _dir isnt undefined
+        if myDirs.length > 0
           @findFileInDirectories myDirs, _path, cb
         else
           cb? 'not found'
@@ -217,11 +233,68 @@ class Application extends Config
   
   mapAllResources: (cb) ->
     @getResources =>
+      need = @data.currentResources.length
+      found = notFound = 0
       for item in @data.currentResources
         localPath = @URLtoLocalPath item.url
         if localPath?
           @getFileMatch localPath, (err, success) =>
-              cb? null, 'done' unless err?
+            need--
+            show arguments
+            if err? then notFound++
+            else found++            
+
+            if need is 0
+              if found > 0
+                cb? null, 'done'
+              else
+                cb? 'nothing found'
+
+        else
+          need--
+          notFound++
+          if need is 0
+            cb? 'nothing found'
+
+  setBadgeText: (text, tabId) ->
+    badgeText = text || '' + Object.keys(@data.currentFileMatches).length
+    chrome.browserAction.setBadgeText 
+      text:badgeText
+      # tabId:tabId
+  
+  removeBadgeText:(tabId) ->
+    chrome.browserAction.setBadgeText 
+      text:''
+      # tabId:tabId
+
+  lsR: (dir, onsuccess, onerror) ->
+    @results = {}
+
+    chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
+      
+      todo = 0
+      ignore = /.git|.idea|node_modules|bower_components/
+      dive = (dir, results) ->
+        todo++
+        reader = dir.createReader()
+        reader.readEntries (entries) ->
+          todo--
+          for entry in entries
+            do (entry) ->
+              results[entry.fullPath] = entry
+              if entry.fullPath.match(ignore) is null
+                if entry.isDirectory
+                  todo++
+                  dive entry, results 
+              # show entry
+          show 'onsuccess' if todo is 0
+          # show 'onsuccess' results if todo is 0
+        ,(error) ->
+          todo--
+          # show error
+          # onerror error, results if todo is 0 
+
+      console.log dive dirEntry, @results  
 
 
 module.exports = Application

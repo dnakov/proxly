@@ -23,18 +23,18 @@ gulp.task('copy', function() {
 	gulp.src(directory + '/src/fonts/**')
 		.pipe(gulp.dest(directory + '/build/fonts'));
 	gulp.src(directory + '/src/images/**')
-		.pipe(gulp.dest(directory + '/build/icons'));
+		.pipe(gulp.dest(directory + '/build/images'));
 	gulp.src(directory + '/src/_locales/**')
 		.pipe(gulp.dest(directory + '/build/_locales'));
 	return gulp.src(directory + '/src/manifest.json')
-		.pipe(gulp.dest('build'));
+		.pipe(gulp.dest(directory + '/build/'));
 });
  
 //copy and compress HTML files
 gulp.task('html', function() {
 	return gulp.src(directory + '/src/*.html')
 		.pipe(cleanhtml())
-		.pipe(gulp.dest('build'));
+		.pipe(gulp.dest(directory + '/build'));
 });
  
 //run scripts through JSHint
@@ -45,7 +45,7 @@ gulp.task('jshint', function() {
 });
  
 //copy vendor scripts and uglify all other scripts, creating source maps
-gulp.task('scripts', ['jshint'], function() {
+gulp.task('scripts', function() {
 	return gulp.src([directory + '/src/scripts/**/*.js'])
 		.pipe(stripdebug())
 		.pipe(uglify({outSourceMap: true}))

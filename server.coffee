@@ -60,7 +60,7 @@ class Server
           @socket.getInfo s, (socketInfo) =>
             cnt--
             if not chrome.runtime.lastError?
-              @socket.disconnect s if socketInfo.connected
+              @socket.disconnect s if @status.socketInfo?.connected or not @status.socketInfo?
               @socket.destroy s
 
             cb? null, 'success' if cnt is 0
@@ -193,7 +193,7 @@ class Server
     @socket.disconnect socketId
     @socket.destroy socketId
     show 'ending ' + socketId
-    @socket.accept @socketInfo.socketId, @_onAccept
+    @socket.accept @status.socketInfo.socketId, @_onAccept
 
   _writeError: (socketId, errorCode, keepAlive) ->
     file = size: 0

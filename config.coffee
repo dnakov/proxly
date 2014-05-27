@@ -16,7 +16,7 @@ class Config
   wrapInbound: (obj, fname, f) ->
       _klas = obj
       @LISTEN.Ext fname, (args) ->
-        if args?.isProxy
+        if args?.isProxy?
           if typeof arguments[1] is "function"
             if args.arguments?.length >= 0
               return f.apply _klas, args.arguments.concat arguments[1] 
@@ -57,7 +57,11 @@ class Config
         msg[fname].arguments.push callback
         @MSG.Ext msg, () -> undefined
       else
-        @MSG.Ext msg, callback 
+        @MSG.Ext msg, () =>
+          argz = Array.prototype.slice.call arguments
+          # proxyArgs = [isProxy:argz]
+          if argz?.length > 0 and argz[0]?.isProxy?
+            callback.apply @, argz[0].isProxy 
 
   wrapObjOutbound: (obj) ->
     (obj[key] = @wrapOutbound obj, obj.constructor.name + '.' + key, obj[key]) for key of obj when typeof obj[key] is "function"

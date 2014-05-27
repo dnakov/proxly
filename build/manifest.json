@@ -1,26 +1,41 @@
 {
-  "name": "Proxly",
-  "version": "0.1.0",
-  "manifest_version": 2,
-  "description": "Proxly App",
-  "icons": {
-    "16": "images/icon-16.png",
-    "128": "images/icon.png"
-  },
-  "app": {
+    "name": "Proxly Extension",
+    "version": "0.1.0",
+    "manifest_version": 2,
+    "description": "Proxly Extension",
+    "icons": {
+        "128": "images/icon.png"
+    },
+    "options_page":"options.html",
+    "devtools_page":"panel.html",
+ 
+    "web_accessible_resources": [
+        "redirector"
+    ],
+    "browser_action": {
+        "default_icon": {
+            "38": "images/icon-38.png",
+            "19": "images/icon-19.png"
+            
+        },
+        "default_title": "Proxly"
+    },
     "background": {
-      "scripts": ["scripts/background.bundle.js"]
-    }
-  },
-  "permissions": [
-  {"socket":[
-            "tcp-connect",
-            "tcp-listen::"
-        ]},
-      "notifications",
-      "webview", 
-      "<all_urls>",
-      {"fileSystem": ["write", "retainEntries", "directory"]}, 
-      "storage"
-  ]
+        "scripts": [
+            "scripts/background.bundle.js"
+        ]
+    },
+       "permissions": [
+       "management",
+       "activeTab",
+        "storage", 
+        "background",
+        "tabs",
+        "notifications", {"fileSystem": ["write", "retainEntries", "directory"]},   
+        "webRequest",
+        "webRequestBlocking",
+        "declarativeWebRequest",
+        "\u003Call_urls\u003E",
+        "chrome-extension://*","chrome-devtools://*"
+    ]
 }
