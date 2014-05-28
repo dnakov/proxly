@@ -73,6 +73,8 @@ class Redirect
       chrome.webRequest.onBeforeRequest.removeListener @data[@currentTabId].listener
 
     @data[@currentTabId].listener = @createRedirectListener()
+    @data[@currentTabId].onBeforeSendHeadersListener = @createOnBeforeSendHeadersListener()
+    @data[@currentTabId].onHeadersReceivedListener = @createOnHeadersReceivedListener()
     # @data[@currentTabId].isOn = true
     @_start @currentTabId
 
@@ -81,12 +83,22 @@ class Redirect
 
   _stop: (tabId) ->
     chrome.webRequest.onBeforeRequest.removeListener @data[tabId].listener
-
+    chrome.webRequest.onBeforeSendHeaders.removeListener @data[tabId].onBeforeSendHeadersListener
+    chrome.webRequest.onHeadersReceived.removeListener @data[tabId].onHeadersReceivedListener
+    
   _start: (tabId) ->
     chrome.webRequest.onBeforeRequest.addListener @data[tabId].listener,
       urls:['<all_urls>']
-      tabId:@currentTabId,
+      tabId:@tabId,
       ['blocking']
+    chrome.webRequest.onBeforeSendHeaders.addListener @data[tabId].onBeforeSendHeadersListener,
+      urls:['<all_urls>']
+      tabId:@tabId,
+      ["requestHeaders"]
+    chrome.webRequest.onHeadersReceived.addListener @data[tabId].onHeadersReceivedListener,
+      urls:['<all_urls>']
+      tabId:@tabId,
+      ['blocking','responseHeaders']    
 
   getCurrentTab: (cb) ->
     # tried to keep only activeTab permission, but oh well..
@@ -114,6 +126,36 @@ class Redirect
         @_stop(@currentTabId)
 
       return isOn
+
+  createOnBeforeSendHeadersListener: () ->
+    (details) ->
+      path = @getLocalFilePathWithRedirect details.url
+      if path?
+        flag = false
+        rule =
+          name: "Origin"
+          value: "http://proxly.com"
+        for header in details.requestHeaders
+          if header.name is rule.name
+            flag = true
+            header.value = rule.value
+            break
+
+        details.requestHeaders.push rule if not flag
+
+      return requestHeaders:details.requestHeaders
+
+  createOnHeadersReceivedListener: () ->
+    (details) ->
+      path = @getLocalFilePathWithRedirect details.url
+      if path?
+        rule =
+          name: "Access-Control-Allow-Origin"
+          value: "*"
+
+        details.responseHeaders.push rule
+
+      return responseHeaders:details.responseHeaders
 
   createRedirectListener: () ->
     (details) =>
