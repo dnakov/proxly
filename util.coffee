@@ -1,7 +1,7 @@
 # http://stackoverflow.com/a/21742093
 module.exports = (() ->
 
-  debug = false
+  debug = true
   
   return (window.show = () ->) if not debug
 

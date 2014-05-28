@@ -138,6 +138,8 @@ class Application extends Config
 
   getLocalFile: (info, cb) =>
     filePath = info.uri
+    justThePath = filePath.match(/^([^#?\s]+)?(.*?)?(#[\w\-]+)?$/)
+    filePath = justThePath[1] if justThePath?
     # filePath = @getLocalFilePathWithRedirect url
     return cb 'file not found' unless filePath?
     _dirs = []
