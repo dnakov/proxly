@@ -42,6 +42,7 @@ class Server
           if result > -1
             show 'listening ' + @status.socketInfo.socketId
             @status.isOn = true
+            @status.url = 'http://' + @status.host + ':' + @status.port + '/'
             @socket.accept @status.socketInfo.socketId, @_onAccept
             cb? null, @status
           else
@@ -54,6 +55,12 @@ class Server
       @status.isOn = false
       return cb? null, 'success' unless @socketIds?
       cnt = 0
+      i = 0
+      
+      while i < @socketIds[0]
+        @socket.destroy i
+        i++
+
       for s in @socketIds
         do (s) =>
           cnt++
@@ -67,6 +74,7 @@ class Server
 
   stop: (cb) ->
     @killAll (err, success) =>
+      @status.isOn = false
       if err? 
         cb? err
       else

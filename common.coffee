@@ -247,6 +247,7 @@ class Application extends Config
   
   mapAllResources: (cb) ->
     @getResources =>
+      debugger;
       need = @data.currentResources.length
       found = notFound = 0
       for item in @data.currentResources

@@ -29,7 +29,7 @@ class ProxlyCtrl extends @BaseCtrl
 
     @data = @app.Storage.data
 
-    @$scope.server = @app.Storage.session.server.status
+    @$scope.server = @app.Storage.session.server
     # @$scope.data = @app.data
     @$scope.maps = @data.maps 
     @$scope.directories = @data.directories 
@@ -46,10 +46,12 @@ class ProxlyCtrl extends @BaseCtrl
     # @$scope.setCurrentFilter = @setCurrentFilter
     # @$scope.trustAsResourceUrl = @trustAsResourcUrl
     @$scope.urls = {}
-    @$scope.serverCheckbox = @$scope.server.isOn
-    @$scope.$watch 'server.isOn', (newValue, oldValue) =>
-      @$scope.serverCheckbox = newValue
-
+    @$scope.serverCheckbox = @$scope.server.status.isOn
+    @$scope.$watch 'server.status', 
+      (newValue, oldValue) =>
+        @$scope.serverCheckbox = newValue.isOn
+        @app.Storage.session.server.status.port = newValue.port
+      ,true
     @$scope.currentFileMatches = @data.currentFileMatches
     @$scope.$watch 'currentFilter', (newValue, oldValue) =>
       @$scope.setLocalPath newValue
@@ -175,12 +177,13 @@ class ProxlyCtrl extends @BaseCtrl
     @sce.trustAsHtml text
 
   toggleServer: () ->
-    if @$scope.server.isOn
+    if @app.Storage.session.server.status.isOn
       @app.stopServer =>
-        @$scope.$apply()
+        console.log 'stop'
     else
       @app.startServer =>
-        @$scope.$apply()
+        # @$scope.$apply()
+        console.log 'start'
 
   getClass: (type, item) ->
     if type is 'on'

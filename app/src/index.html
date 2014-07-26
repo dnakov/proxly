@@ -35,8 +35,8 @@
 
 <!--                 <form class="navbar-form navbar-left " role="search">
                     <div class="form-group">
-                        <span class="proxly-host">http://{{server.host}}:</span>
-                        <input type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
+                        <span class="proxly-host">http://{{server.status.host}}:</span>
+                        <input type="number" ng-model="server.status.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
                         <button type="button" ng-click="changePort()" class="btn btn-sm btn-default">Save</button>
                     </div>
 
@@ -168,7 +168,7 @@
                         <span class="icon-bar"></span>
                     </button>
                     <a style="" href="#" class="navbar-brand">
-                        <span class="proxly-name">{{server.url}}</span>
+                        <span class="proxly-name">http://{{server.status.host}}:{{server.status.port}}/</span>
                     </a>
 
 
@@ -176,8 +176,8 @@
 
 <!--                 <form class="navbar-form navbar-left " role="search">
                     <div class="form-group">
-                        <span class="proxly-host">http://{{server.host}}:</span>
-                        <input type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
+                        <span class="proxly-host">http://{{server.status.host}}:</span>
+                        <input type="number" ng-model="server.status.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534">
                         <button type="button" ng-click="changePort()" class="btn btn-sm 'btn-default'">Save</button>
                     </div>
 
@@ -185,7 +185,7 @@
 
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav nav">
-                        <li><input ng-disabled="server.isOn" identifier="server" type="number" ng-model="server.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
+                        <li><input ng-disabled="server.status.isOn" identifier="server" type="number" ng-model="server.status.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
                         <li>
                             <div class="btn-group" >
                             <flip-switch ng-model="serverCheckbox" toggle-this="toggleServer()" identifier="server"/>
@@ -215,7 +215,7 @@
                                     </dd>
                                     <dt>Redirect</dt>
                                     <dd>
-                                        <span>{{server.url}}{{res.localPath}}</span>
+                                        <span>{{server.status.url}}{{res.localPath}}</span>
                                     </dd>
                                     <dt>File</dt>
                                     <dd>
