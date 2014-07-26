@@ -1,6 +1,6 @@
 {
   "name": "Proxly",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "manifest_version": 2,
   "description": "Proxly App",
   "icons": {
@@ -17,10 +17,9 @@
             "tcp-listen::"
         ]},
       "notifications",
-      "webview", 
+      "webview",
       "<all_urls>",
-      {"fileSystem": ["write", "retainEntries", "directory"]}, 
+      {"fileSystem": ["write", "retainEntries", "directory"]},
       "storage"
   ]
-  ,"key":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhSNDJD8qrAQzPt5X+Df+Bna/TguT8O1gLvlsRQEgy4lYvS5nCEceGu7Qhb+9hWhAiyRuSmP98M0ImbUzTa38uqg0PuosEZPsla4kAtzNaMAJQLBtaO7nGsBFFF14c4Ot70OJpO98t/T/NNXo70I84Aqz0pur1Qy+9SZEgQoq4CRaY8Y2KAMsajz18WQXKMnJFTm2YCR51MvpVOSe9NJ0uzAHQ7brghnRUfjVg7C9S5kAu9yiYg/W7COwyw8X1vFC4VDGt90mo1xBZ37QDpUngjDtuA9CDl8NWUPZVgm0rqPxBe5VkyDeNW30Mvw4cQIsE7Ca4lHC2cAy0niF64B9wQIDAQAB"
 }
