@@ -1,0 +1,342 @@
+<!--
+Google IO 2012/2013 HTML5 Slide Template
+
+Authors: Eric Bidelman <ebidel@gmail.com>
+         Luke Mahé <lukem@google.com>
+
+URL: https://code.google.com/p/io-2012-slides
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">-->
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+  <!--This one seems to work all the time, but really small on ipad-->
+  <!--<meta name="viewport" content="initial-scale=0.4">-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" media="all" href="theme/css/default.css">
+  <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="theme/css/phone.css">
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->
+  <script data-main="js/slides" src="js/require-1.0.8.min.js"></script>
+</head>
+<body style="opacity: 0">
+
+<slides class="layout-widescreen">
+
+  <slide class="logoslide nobackground">
+    <article class="flexbox vcenter">
+      <span><img src="http://placehold.it/383x92&text=Proxly-Logo"></span>
+    </article>
+  </slide>
+
+  <slide class="title-slide segue nobackground">
+    <aside class="gdbar"><img src="http://placehold.it/128x128&text=Proxly-Logo"></aside>
+    <!-- The content of this hgroup is replaced programmatically through the slide_config.json. -->
+    <hgroup class="auto-fadein">
+      <h1 data-config-title><!-- populated from slide_config.json --></h1>
+      <h2 data-config-subtitle><!-- populated from slide_config.json --></h2>
+      <p data-config-presenter><!-- populated from slide_config.json --></p>
+    </hgroup>
+  </slide>
+
+  <slide class="segue">
+    <hgroup>
+      <h2>DEMO</h2>
+      <h3>Livereload on localhost with gulp</h3>
+    </hgroup>
+  </slide>
+
+  <slide hidden>
+    <hgroup>
+
+    </hgroup>
+
+  </slide>
+
+  <slide>
+    <article>
+      <ul>
+        <li>Creating a Visualforce page and controller
+          <ul class="">
+            <li><pre class="prettyprint lang-html" data-lang="HTML">
+&lt;apex:page controller="genericGridController"&gt;
+  &lt;apex:stylesheet value="{!$Resource.myCoolStylesheet}"/&gt;
+  &lt;div id="sl" class="multi-app"&gt;
+    &lt;div id="sl-body"&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;script src="{!URLFOR($Resource.myCoolStaticResource, 'myCoolScript.js'}"/&gt;
+&lt;/apex:page&gt;
+            </pre></li>
+          </ul>
+        </li>
+        <li>TODO:Make this cycle through adding code to a VF page
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <article>
+      <ul>
+        <li>Editing pages and static resources</li>
+        <li>Process
+          <ul class="build">
+            <li>Make a change</li>
+            <li>Save
+              <ul class="build">
+                <li>Zips up resources (if bundled)</li>
+                <li>Sends to salesforce</li>
+                <li>You wait a little bit</li>
+              </ul>
+            </li>
+            <li>Refresh the page</li>
+            <li>Debug stuff / see results</li>
+            <li>Repeat...</li>
+          </ul>
+        </li>
+        <li>
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+<slide>
+    <article>
+      <ul>
+        <li>Editing pages and static resources</li>
+        <li>Process
+          <ul class="build">
+            <li>Make a change</li>
+            <li>Save</li>
+            <li>Debug stuff / see results</li>
+            <li>Repeat...</li>
+          </ul>
+        </li>
+        <li>
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+<slide>
+    <article>
+      <ul>
+        <li>Creating a Visualforce page and controller
+          <ul class="">
+            <li><pre class="prettyprint lang-html " data-lang="HTML">
+&lt;apex:page controller="genericGridController"&gt;
+  &lt;apex:stylesheet value="{!$Resource.myCoolStylesheet}"/&gt;
+  &lt;div id="sl" class="multi-app"&gt;
+    &lt;div id="sl-body"&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;script src="{!URLFOR($Resource.myCoolStaticResource, 'myCoolScript.js'}"/&gt;
+&lt;/apex:page&gt;
+            </pre></li>
+          </ul>
+        </li>
+        <li>
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2></h2>
+      <h3>Subtitle Placeholder</h3>
+    </hgroup>
+    <article>
+      <!-- <p>A list where items build:</p> -->
+      <ul class="">
+        <li>Rendered Visualforce page
+          <pre class="prettyprint lang-html" data-lang="HTML">
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script src="/static/111213/js/perf/stub.js" type="text/javascript"&gt;&lt;/script&gt;
+    <b>&lt;link class="user" href="/resource/1404908481000/myCoolStylesheet.css"</b>
+      rel="stylesheet" type="text/css" /&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id="sl" ng-app="demoApp"&gt;
+      &lt;div id="sl-body"&gt;
+        &lt;div class="container" ng-view="ng-view"&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    <b>&lt;script src="/resource/1404908481000/mySingleCoolScript.js"&gt;&lt;/script&gt;</b>
+  &lt;/body&gt;
+&lt;/html&gt;
+          </pre>
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+<slide>
+    <hgroup>
+      <h2></h2>
+      <h3>Subtitle Placeholder</h3>
+    </hgroup>
+    <article>
+      <!-- <p>A list where items build:</p> -->
+      <ul class="high">
+        <li>Rendered Visualforce page, manually redirecting to localhost
+          <pre class="prettyprint lang-html" data-lang="HTML">
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;script src="/static/111213/js/perf/stub.js" type="text/javascript"&gt;&lt;/script&gt;
+    <b>&lt;link class="user" href="http://localhost:9000/myCoolStylesheet.css"</b>
+      rel="stylesheet" type="text/css" /&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id="sl" ng-app="demoApp"&gt;
+      &lt;div id="sl-body"&gt;
+        &lt;div class="container" ng-view="ng-view"&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    <b>&lt;script src="http://localhost:9000/mySingleCoolScript.js"&gt;&lt;/script&gt;</b>
+  &lt;/body&gt;
+&lt;/html&gt;
+          </pre>
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+<slide class="segue">
+    <hgroup>
+      <h2>DEMO</h2>
+      <h3>Proxly chrome extension</h3>
+    </hgroup>
+  </slide>
+
+<slide>
+    <article>
+      <ul>
+        <li>My tidy Visualforce page
+          <ul class="">
+            <li><pre class="prettyprint lang-html" data-lang="HTML">
+&lt;apex:page controller="genericGridController"&gt;
+  &lt;apex:stylesheet value="{!$Resource.myCoolStylesheet}"/&gt;
+  &lt;div id="sl" class="multi-app"&gt;
+    &lt;div id="sl-body"&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;script src="{!$Resource.mySingleCoolScript}"/&gt;
+  &lt;script src="{!URLFOR($Resource.myCoolStaticResource, 'myCoolScript.js'}"/&gt;
+&lt;/apex:page&gt;
+            </pre></li>
+          </ul>
+        </li>
+        <li>TODO:Make this cycle through adding code to a VF page
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <article>
+      <ul>
+        <li>Same page after a few development iterations
+          <ul class="">
+            <li><pre class="prettyprint lang-html" data-lang="HTML">
+&lt;apex:page controller="genericGridController"&gt;
+  &lt;apex:stylesheet value="{!$Resource.myCoolStylesheet}"/&gt;
+  &lt;apex:stylesheet value="{!$Resource.bootstrap}"/&gt;
+  &lt;apex:stylesheet value="{!$Resource.someCrappyBootstrapThemes}"/&gt;
+  &lt;apex:stylesheet value="{!$Resource.fileFullOfCSSFixesContainingImportant}"/&gt;
+  &lt;div id="sl" class="multi-app"&gt;
+    &lt;div id="sl-body"&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;script src="{!$Resource.mySingleCoolScript}"/&gt;
+  &lt;script src="{!URLFOR($Resource.jquery1, 'jquery.js'}"/&gt;
+  &lt;script src="{!URLFOR($Resource.bootstrap, 'bootstrap.js'}"/&gt;
+  &lt;script src="{!URLFOR($Resource.jquery2, 'jquery.js'}"/&gt;
+  &lt;script src="{!URLFOR($Resource.myCoolStaticResource, 'myCoolScript.js'}"/&gt;
+  &lt;script src="{!URLFOR($Resource.thisCoolLibraryIFound, 'thisCoolLibraryIFound.js'}"/&gt;
+  &lt;script src="{!URLFOR($Resource.fixedSomethingStupid, 'fixedSomethingStupid.js'}"/&gt;
+&lt;/apex:page&gt;
+            </pre></li>
+          </ul>
+        </li>
+        <li>TODO:Make this cycle through adding code to a VF page
+        </li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide hidden>
+    Hidden slides are left out of the presentation.
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Yeoman+Bower+Gulp</h2>
+      <h3>Helping you be consistent</h3>
+    </hgroup>
+    <article>
+      <ul class="build">
+        <li>Yeoman - scaffold your project</li>
+        <li>Bower - manage dependencies</li>
+        <li>Gulp - build,test,run</li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide class="segue">
+    <hgroup>
+      <h2>DEMO</h2>
+      <h3>Yeoman+Bower+Gulp+Proxly</h3>
+    </hgroup>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Recap</h2>
+      <h3></h3>
+    </hgroup>
+    <article>
+      <ul class="build">
+
+      </ul>
+    </article>
+  </slide>
+
+  <slide class="thank-you-slide segue nobackground">
+    <aside class="gdbar right"><img src="http://placehold.it/128x128&text=Proxly-Logo"></aside>
+    <article class="flexbox vleft auto-fadein">
+      <h2>&lt;Thank You!&gt;</h2>
+      <p>Important contact information goes here.</p>
+    </article>
+    <p class="auto-fadein" data-config-contact>
+      <!-- populated from slide_config.json -->
+    </p>
+  </slide>
+
+  <slide class="logoslide dark nobackground">
+    <article class="flexbox vcenter">
+      <span><img src="http://placehold.it/383x92&text=Proxly-Logo"></span>
+    </article>
+  </slide>
+
+  <slide class="backdrop"></slide>
+
+
+
+</slides>
+
+<script>
+
+</script>
+
+<!--[if IE]>
+  <script src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+  <script>CFInstall.check({mode: 'overlay'});</script>
+<![endif]-->
+</body>
+</html>
