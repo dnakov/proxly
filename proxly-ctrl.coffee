@@ -111,6 +111,8 @@ class ProxlyCtrl extends @BaseCtrl
     newItem = if item? then angular.copy(item) else {}
     newItem.isRedirect = true
     newItem.isOn = false
+    newItem.type = 'Web Server'
+    newItem.origin = 'http://localhost:9000/'
     newItem.url = newItem.regexRepl = '' 
     @data.maps.push newItem
     newItem.name = 'Redirect ' + @data.maps.length
@@ -145,16 +147,20 @@ class ProxlyCtrl extends @BaseCtrl
     if @$scope.filteredResources?
       for resource in @$scope.filteredResources
         resource.localPath = resource.url.replace(reg, item.regexRepl)
-        _dirs = [] 
-        _dirs.push dir for dir in @$scope.directories when dir.isOn
-        @app.getFileMatch resource.localPath, (err, fileMatch, directory) => 
-          if err?             
-            for res in @$scope.filteredResources when res is resource
-              res.localFile = ''
-          else
-            for res in @$scope.filteredResources when res.localPath is fileMatch.filePath
-              res.localFile = directory.pathName + '/' + res.localPath
-          @$scope.$apply()
+        if item.type is 'Web Server'
+          resource.origin = item.origin
+          resource.localFile = 'N/A'
+        else
+          _dirs = [] 
+          _dirs.push dir for dir in @$scope.directories when dir.isOn
+          @app.getFileMatch resource.localPath, (err, fileMatch, directory) => 
+            if err?             
+              for res in @$scope.filteredResources when res is resource
+                res.localFile = ''
+            else
+              for res in @$scope.filteredResources when res.localPath is fileMatch.filePath
+                res.localFile = directory.pathName + '/' + res.localPath
+            @$scope.$apply()
 
 
   openDirectory: (cb) ->

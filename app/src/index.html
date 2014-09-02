@@ -111,7 +111,12 @@
                 <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="col-xs-2">
-                            <div class="btn-group">
+                            <div class="dropdown">
+                                <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{item.type}}<span class="caret"></span></button>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="#" ng-click="item.type='Local File'">Local File</a></li>
+                                    <li><a href="#" ng-click="item.type='Web Server'">Web Server</a></li>
+                                </ul>
                                 <!-- <flip-switch ng-model="item.isOn" identifier="redir-{{$index}}"/> -->
                                 <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
                                 <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
@@ -129,20 +134,28 @@
                         </div>
                     </div>
 
-
-                <div class="row" ng-show="item.isRedirect == true">
-                    <div class="col-xs-6">
-                        <span class="label label-default">Match</span>
-                        <input list="regex-url" ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
-<!--                         <datalist id="regex-url">
-                            <option value="test"></option>
-                        </datalist> -->
+                <div ng-show="item.isRedirect == true">
+                    <div class="row" ng-show="item.type == 'Web Server'">
+                        <div class="col-xs-12">
+                            <span class="label label-default">Origin</span>
+                            <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.origin" type="text" class="form-control input-sm" />
+                        </div>
                     </div>
-                    <div class="col-xs-6">
-                        <span class="label label-default">Replace With</span>
-                        <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
-                    </div>
-                </div>       
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <span class="label label-default">Match</span>
+                            <input list="regex-url" ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
+    <!--                         <datalist id="regex-url">
+                                <option value="test"></option>
+                            </datalist> -->
+                        </div>
+                        <div class="col-xs-6">
+                            <span class="label label-default">Replace With</span>
+                            <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-model="item.regexRepl" ng-change="setLocalPath(item)" type="text" class="form-control input-sm" />
+                        </div>
+                    </div>   
+              
+                </div>    
         </div>
        
 <!--         <div ng-show="!navIsRedirect || !extInfo.enabled" class="bs-callout bs-callout-danger">
@@ -215,10 +228,10 @@
                                     </dd>
                                     <dt>Redirect</dt>
                                     <dd>
-                                        <span>{{server.status.url}}{{res.localPath}}</span>
+                                        <span>{{res.origin != null ? res.origin : ''}}{{res.localPath}}</span>
                                     </dd>
-                                    <dt>File</dt>
-                                    <dd>
+                                    <dt ng-show="res.origin == null">File</dt>
+                                    <dd ng-show="res.origin == null">
                                         <span>{{res.localFile}}
                                         </span>
                                     </dd>

@@ -43,13 +43,18 @@ class PopupCtrl extends ProxlyCtrl
     .tab @currentTab.id 
     .withMaps @$scope.maps
 
+    prefix = @app.Storage.session.server.status.url 
+
+    if item.type isnt 'Local File' 
+      prefix = item.origin
+
     @app.mapAllResources () =>
       isOn = @app.Redirect
       # .tab @currentTab.id
-      .withPrefix @app.Storage.session.server.status.url
+      .withPrefix prefix
       .withMaps @$scope.maps
       .toggle()
-      if isOn 
+      if isOn and item.type is 'Local File'
         @app.startServer () =>
           chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
             @app.setBadgeText null, @currentTab.id

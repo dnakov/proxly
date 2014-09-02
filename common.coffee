@@ -55,6 +55,8 @@ class Application extends Config
           regexRepl:''
           isRedirect:true
           isOn:false
+          type:'Local File'
+          
 
 
       # if @Redirect? then @Redirect.data = @data.tabMaps
