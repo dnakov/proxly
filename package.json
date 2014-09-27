@@ -12,7 +12,8 @@
     "observed": "git://github.com/dnakov/observed.git",
     "watchjs":"git://github.com/dnakov/Watch.JS.git",
     "browserify-shim": "^3.5.0",
-    "angular-animate": "*"
+    "angular-animate": "*",
+    "web-server-chrome": "git://github.com/dnakov/web-server-chrome.git"
   },
   "browser": {
     "jquery": "./js/vendor/jquery.js"
