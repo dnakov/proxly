@@ -33,27 +33,50 @@ chrome.runtime.getBackgroundPage (win) ->
   ngapp.factory 'proxlyApp', => win.app
   ngapp.factory 'dndFile', -> DnDFileController
 
-  ngapp.directive 'flipSwitch', () ->
-    restrict:'AE',
-    scope:
-      id:"@identifier",
-      toggleThis:'&toggleThis'
-      _model:'=ngModel'
-    template:'''
-    <div class="onoffswitch">
-      <input type="checkbox" name="onoffswitch" id="{{id}}" ng-model="_model" ng-change="toggleThis()" class="onoffswitch-checkbox">
-      <label class="onoffswitch-label" for="{{id}}">
-          <span class="onoffswitch-inner"></span>
-          <span class="onoffswitch-switch"></span>
-      </label>
-    </div>
-    '''
-    replace:true
-
   # ProxlyCtrl.$inject = ["$scope", "$filter", "$sce", "$document", "$window", "dndFile"]
 
   ngapp.controller 'ProxlyCtrl', ProxlyCtrl
   
+  ngapp.directive "flipSwitch", ->
+    restrict: "EA"
+    replace: true
+    require: "ngModel"
+    scope:
+      afterToggle:'&'
+      disabled: "@"
+      onLabel: "@"
+      offLabel: "@"
+      knobLabel: "@"
+
+    template: "<div role=\"radio\" class=\"switch\" ng-class=\"{ 'disabled': disabled }\">" + "<div class=\"switch-animate\" ng-class=\"{'switch-off': !model, 'switch-on': model}\">" + "<span class=\"switch-left\" ng-bind=\"onLabel\"></span>" + "<span class=\"knob\" ng-bind=\"knobLabel\"></span>" + "<span class=\"switch-right\" ng-bind=\"offLabel\"></span>" + "</div>" + "</div>"
+    link: (scope, element, attrs, ngModelCtrl) ->
+      attrs.onLabel = "On"  unless attrs.onLabel
+      attrs.offLabel = "Off"  unless attrs.offLabel
+      attrs.knobLabel = "\u00a0"  unless attrs.knobLabel
+      attrs.disabled = false  unless attrs.disabled
+      element.on "click", ->
+        scope.$apply scope.toggle
+        return
+
+      ngModelCtrl.$formatters.push (modelValue) ->
+        modelValue
+
+      ngModelCtrl.$parsers.push (viewValue) ->
+        viewValue
+
+      ngModelCtrl.$render = ->
+        scope.model = ngModelCtrl.$viewValue
+        return
+
+      scope.toggle = toggle = ->
+        unless scope.disabled
+          scope.model = not scope.model
+          ngModelCtrl.$setViewValue scope.model
+          scope.afterToggle?()
+        return
+
+      return
+
 
   ngRegex = ngapp.filter "regex", ->
     (input, field, regex) ->

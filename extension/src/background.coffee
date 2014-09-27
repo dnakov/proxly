@@ -17,6 +17,7 @@ Redirect = require '../../redirect.coffee'
 Storage = require '../../storage.coffee'
 FileSystem = require '../../filesystem.coffee'
 Server = require '../../server.coffee'
+LiveReloadClient = require '../../livereloadclient.coffee'
 
 redir = new Redirect
 
@@ -25,8 +26,10 @@ app = root.app = new Application
   Storage: Storage
   FS: FileSystem
   Server: Server
-  
+  LiveReloadClient: new LiveReloadClient
+
 app.Storage.retrieveAll(null)
+app.LiveReloadClient.tabs = app.liveReload
 #   app.Storage.data[k] = data[k] for k of data
   
 chrome.tabs.onUpdated.addListener (tabId, changeInfo, tab) =>

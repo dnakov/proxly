@@ -10,7 +10,8 @@
     "devtools_page":"panel.html",
 
     "web_accessible_resources": [
-        "redirector"
+        "redirector",
+        "livereload.js"
     ],
     "browser_action": {
         "default_icon": {

@@ -1,9 +1,6 @@
 #TODO: rewrite this class using the new chrome.sockets.* api when you can manage to make it work
-
-WebServer = require('web-server-chrome')
-
 class Server
-  
+  socket: chrome.socket
   # tcp: chrome.sockets.tcp
   socketProperties:
       persistent:true
@@ -11,7 +8,6 @@ class Server
   # socketInfo:null
   getLocalFile:null
   socketIds:[]
-  webServer:null
   status:
     host:null
     port:null
@@ -21,16 +17,14 @@ class Server
     url:null
 
   constructor: () ->
-    # @socket = chrome.sockets.tcp
     @status.host = "127.0.0.1"
     @status.port = 10012
     @status.maxConnections = 50
     @status.url = 'http://' + @status.host + ':' + @status.port + '/'
     @status.isOn = false
-    
 
 
-  start: (dirId, host,port,maxConnections, cb) ->
+  start: (host,port,maxConnections, cb) ->
     if host? then @status.host = host
     if port? then @status.port = port
     if maxConnections? then @status.maxConnections = maxConnections
@@ -39,41 +33,44 @@ class Server
       return cb? err if err?
 
       @status.isOn = false
-      chrome.fileSystem.restoreEntry dirId, (entry) =>
-        @webServer = new WebServer.Server {handlers:[[".*", WebServer.DirHandler(new WebServer.FileSystem(entry))]], port:@status.port}
-        @webServer.start (er,socketId) =>
-          if er? then cb?(er)
-          
-          @socketIds.push socketId
-
-          chrome.storage.sync.set 'socketIds':@socketIds
-          
-          @status.isOn = true
-          cb?(null, @status)
+      @socket.create 'tcp', {}, (socketInfo) =>
+        @status.socketInfo = socketInfo
+        @socketIds = []
+        @socketIds.push @status.socketInfo.socketId
+        chrome.storage.sync.set 'socketIds':@socketIds
+        @socket.listen @status.socketInfo.socketId, @status.host, @status.port, (result) =>
+          if result > -1
+            show 'listening ' + @status.socketInfo.socketId
+            @status.isOn = true
+            @status.url = 'http://' + @status.host + ':' + @status.port + '/'
+            @socket.accept @status.socketInfo.socketId, @_onAccept
+            cb? null, @status
+          else
+            cb? result
 
 
   killAll: (cb) ->
     chrome.storage.sync.get 'socketIds', (result) =>
-      @socketIds = if result.socketIds? then result.socketIds else []
+      @socketIds = result.socketIds
       @status.isOn = false
-      return cb? null, 'success' unless @socketIds?.length > 0
+      return cb? null, 'success' unless @socketIds?
       cnt = 0
       i = 0
       
-      # while i < @socketIds[0]
-      #   chrome.sockets.tcp.disconnect i
-      #   i++
+      while i < @socketIds[0]
+        @socket.destroy i
+        i++
 
-      for s in @socketIds when s?
-        cnt++
-        # chrome.sockets.tcp.getInfo s, (socketInfo) =>
-        #   cnt--
-        #   if not chrome.runtime.lastError?
-        chrome.sockets.tcpServer.disconnect s # if @status.socketInfo?.connected or not @status.socketInfo?
+      for s in @socketIds
+        do (s) =>
+          cnt++
+          @socket.getInfo s, (socketInfo) =>
+            cnt--
+            if not chrome.runtime.lastError?
+              @socket.disconnect s if @status.socketInfo?.connected or not @status.socketInfo?
+              @socket.destroy s
 
-      @socketIds = [];
-
-      cb? null, 'success' 
+            cb? null, 'success' if cnt is 0
 
   stop: (cb) ->
     @killAll (err, success) =>

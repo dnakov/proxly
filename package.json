@@ -12,7 +12,7 @@
     "observed": "git://github.com/dnakov/observed.git",
     "watchjs":"git://github.com/dnakov/Watch.JS.git",
     "browserify-shim": "^3.5.0",
-    "angular-animate": "0.0.2"
+    "angular-animate": "*"
   },
   "browser": {
     "jquery": "./js/vendor/jquery.js"
@@ -42,10 +42,10 @@
   },
   "scripts": {
     "build-app": "browserify -t coffeeify app/src/background.coffee -d > app/src/scripts/background.bundle.js & browserify -t coffeeify -d app/src/index.coffee > app/src/scripts/index.bundle.js",
-    "build-extension": "browserify -t coffeeify extension/src/background.coffee -d > extension/src/scripts/background.bundle.js & coffee -c -o extension/src/scripts extension/src/content.coffee & browserify -t coffeeify -d extension/src/popup.coffee > extension/src/scripts/popup.bundle.js",
+    "build-extension": "browserify -t coffeeify extension/src/background.coffee -d > extension/src/scripts/background.bundle.js & coffee -c -o extension/src/scripts extension/src/content.coffee & coffee -c -o extension/src/scripts extension/src/reloader.coffee & browserify -t coffeeify -d extension/src/popup.coffee > extension/src/scripts/popup.bundle.js",
     "build": "npm run build-app && npm run build-extension",
     "watch-app": "watchify -t coffeeify app/src/background.coffee -o app/src/scripts/background.bundle.js -dv & watchify -t coffeeify app/src/index.coffee -o app/src/scripts/index.bundle.js -dv",
-    "watch-extension": "watchify -t coffeeify extension/src/background.coffee -o extension/src/scripts/background.bundle.js -dv & coffee -c -w -o extension/src/scripts extension/src/content.coffee & watchify -t coffeeify extension/src/popup.coffee -o extension/src/scripts/popup.bundle.js -dv",
+    "watch-extension": "watchify -t coffeeify extension/src/background.coffee -o extension/src/scripts/background.bundle.js -dv & coffee -c -w -o extension/src/scripts extension/src/content.coffee & coffee -c -w -o extension/src/scripts extension/src/reloader.coffee & watchify -t coffeeify extension/src/popup.coffee -o extension/src/scripts/popup.bundle.js -dv",
     "watch": "npm run watch-app & npm run watch-extension",
     "test": "echo \"Error: no test specified\" && exit 1"
   }

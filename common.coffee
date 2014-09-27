@@ -17,6 +17,9 @@ class Application extends Config
   Notify: null
   platform:null
   currentTabId:null
+  liveReload:{}
+  watchedFiles:{}
+  fileWatchers: {}
 
   constructor: (deps) ->
     super
@@ -50,18 +53,29 @@ class Application extends Config
       if not @Storage.data.firstTime?
         @Storage.data.firstTime = false
         @Storage.data.maps.push
-          name:'Salesforce'
+          name:'Example: Salesforce'
           url:'https.*\/resource(\/[0-9]+)?\/([A-Za-z0-9\-._]+\/)?'
           regexRepl:''
           isRedirect:true
           isOn:false
-          type:'Local File'
-          
+          type:'Local Dir'
+          dir: {}
+          directoryEntryId: ''
+        @Storage.data.maps.push
+          name:'Example: Gulp + Salesforce'
+          url:'https.*\/resource(\/[0-9]+)?\/([A-Za-z0-9\-._]+\/)?'
+          regexRepl:''
+          isRedirect:true
+          isOn:false
+          type:'Web Server'
+          origin:'http://localhost:9000/'
+          dir: {}
+          directoryEntryId: ''          
 
 
       # if @Redirect? then @Redirect.data = @data.tabMaps
 
-    @Notify ?= (new Notification).show 
+    # @Notify ?= (new Notification).show 
     # @Storage ?= @wrapObjOutbound new Storage @data
     # @FS = new FileSystem 
     # @Server ?= @wrapObjOutbound new Server
@@ -75,11 +89,14 @@ class Application extends Config
     @restartServer = @wrap @, 'Application.restartServer', @restartServer
     @stopServer = @wrap @, 'Application.stopServer', @stopServer
     @getFileMatch = @wrap @, 'Application.getFileMatch', @getFileMatch
+    @watchFiles = @wrap @, 'Application.watchFiles', @watchFiles
+    @stopWatchingFiles = @wrap @, 'Application.stopWatchingFiles', @stopWatchingFiles
 
     @wrap = if @SELF_TYPE is 'EXTENSION' then @wrapInbound else @wrapOutbound
 
     @getResources = @wrap @, 'Application.getResources', @getResources
     @getCurrentTab = @wrap @, 'Application.getCurrentTab', @getCurrentTab
+
 
     @init()
 
@@ -106,13 +123,14 @@ class Application extends Config
       else
         cb? extInfo
 
-  openApp: () =>
+  openApp: (item) =>
       chrome.app.window.create('index.html',
         id: "mainwin"
         bounds:
           width:770
           height:800,
       (win) =>
+        if item then win.openDirectory(item)
         @appWindow = win) 
 
   getCurrentTab: (cb) ->
@@ -139,40 +157,63 @@ class Application extends Config
 
 
   getLocalFile: (info, cb) =>
-    filePath = info.uri
-    justThePath = filePath.match(/^([^#?\s]+)?(.*?)?(#[\w\-]+)?$/)
-    filePath = justThePath[1] if justThePath?
-    # filePath = @getLocalFilePathWithRedirect url
-    return cb 'file not found' unless filePath?
-    _dirs = []
-    _dirs.push dir for dir in @data.directories when dir.isOn
-    filePath = filePath.substring 1 if filePath.substring(0,1) is '/'
-    @findFileForPath _dirs, filePath, (err, fileEntry, dir) =>
-      if err? then return cb? err
-      fileEntry.file (file) =>
-        cb? null,fileEntry,file
-      ,(err) => cb? err
+    # filePath = info.uri
+    # justThePath = filePath.match(/^([^#?\s]+)?(.*?)?(#[\w\-]+)?$/)
+    # filePath = justThePath[1] if justThePath?
+    # # filePath = @getLocalFilePathWithRedirect url
+    # return cb 'file not found' unless filePath?
+    # for item in @data.maps
+    # _dirs = []
+    # _dirs.push dir for dir in @data.directories when dir.isOn
+    # filePath = filePath.substring 1 if filePath.substring(0,1) is '/'
+    # @findFileForPath _dirs, filePath, (err, fileEntry, dir) =>
+    #   if err? then return cb? err
+    #   fileEntry.getMetadata (meta) =>
+    #     @watchedFiles[filePath] = 
+    #       entry:fileEntry
+    #       lastModified:meta.modificationTime
 
+    #   fileEntry.file (file) =>
+    #     cb? null,fileEntry,file
+    #   ,(err) => cb? err
 
-  startServer: (cb) ->
-    if @Server.status.isOn is false
-      @Server.start null,null,null, (err, socketInfo) =>
-          if err?
-            @Notify "Server Error","Error Starting Server: #{ err }"
-            cb? err
-          else
-            @Notify "Server Started", "Started Server #{ @Server.status.url }"
-            cb? null, @Server.status
-    else
-      cb? 'already started'
+  watchFiles: (tabId, map) ->
+
+    if @fileWatchers[tabId]? then return
+
+    @lsR map.dir
+    
+    @fileWatchers[tabId] = setInterval () =>
+      for key, value of @watchedFiles when value.entry.isDirectory is false
+        do (key,value) =>
+          value.entry.getMetadata (meta) =>
+            if value.lastModified?.getTime() < meta.modificationTime.getTime()
+              @LiveReloadClient.reload(key)
+              show value
+            value.lastModified = meta.modificationTime
+    ,500
+
+  stopWatchingFiles: (tabId) ->
+    clearInterval @fileWatchers[tabId]
+    delete @fileWatchers[tabId]
+
+  startServer: (dirId, cb) ->
+
+    @Server.start dirId, null,null,null, (err, socketInfo) =>
+        if err?
+          # @Notify "Server Error","Error Starting Server: #{ err }"
+          cb? err
+        else
+          # @Notify "Server Started", "Started Server #{ @Server.status.url }"
+          cb? null, @Server.status
 
   stopServer: (cb) ->
       @Server.stop (err, success) =>
         if err?
-          @Notify "Server Error","Server could not be stopped: #{ error }"
+          # @Notify "Server Error","Server could not be stopped: #{ error }"
           cb? err
         else
-          @Notify 'Server Stopped', "Server Stopped"
+          # @Notify 'Server Stopped', "Server Stopped"
           cb? null, @Server.status
 
   restartServer: ->
@@ -205,10 +246,10 @@ class Application extends Config
   URLtoLocalPath: (url, cb) ->
     filePath = @Redirect.getLocalFilePathWithRedirect url
 
-  getFileMatch: (filePath, cb) ->
+  getFileMatch: (item, filePath, cb) ->
     return cb? 'file not found' unless filePath?
     show 'trying ' + filePath
-    @findFileForPath @data.directories, filePath, (err, fileEntry, directory) =>
+    @findFileForPath [item.dir], filePath, (err, fileEntry, directory) =>
 
       if err? 
         # show 'no files found for ' + filePath
@@ -249,7 +290,7 @@ class Application extends Config
   
   mapAllResources: (cb) ->
     @getResources =>
-      debugger;
+
       need = @data.currentResources.length
       found = notFound = 0
       for item in @data.currentResources
@@ -278,6 +319,11 @@ class Application extends Config
     chrome.browserAction.setBadgeText 
       text:badgeText
       # tabId:tabId
+
+  getDirectoryForMap: (map) ->
+    for dir in @data.directories when dir.directoryEntryId is map.directoryEntryId
+      return dir  
+
   
   removeBadgeText:(tabId) ->
     chrome.browserAction.setBadgeText 
@@ -285,33 +331,38 @@ class Application extends Config
       # tabId:tabId
 
   lsR: (dir, onsuccess, onerror) ->
-    @results = {}
+    # @watchedFiles = {}
 
     chrome.fileSystem.restoreEntry dir.directoryEntryId, (dirEntry) =>
       
       todo = 0
       ignore = /.git|.idea|node_modules|bower_components/
-      dive = (dir, results) ->
+      dive = (dir, watchedFiles) ->
         todo++
         reader = dir.createReader()
         reader.readEntries (entries) ->
           todo--
           for entry in entries
             do (entry) ->
-              results[entry.fullPath] = entry
+              watchedFiles[entry.fullPath] = entry:entry
               if entry.fullPath.match(ignore) is null
                 if entry.isDirectory
                   todo++
-                  dive entry, results 
+                  dive entry, watchedFiles 
               # show entry
           show 'onsuccess' if todo is 0
-          # show 'onsuccess' results if todo is 0
+          # show 'onsuccess' watchedFiles if todo is 0
         ,(error) ->
           todo--
-          # show error
-          # onerror error, results if todo is 0 
+          show error
+          # onerror error, watchedFiles if todo is 0 
 
-      # console.log dive dirEntry, @results  
+      dive dirEntry, @watchedFiles  
+      
+  uniqueId = (length=8) ->
+    id = ""
+    id += Math.random().toString(36).substr(2) while id.length < length
+    id.substr 0, length
 
 
 module.exports = Application

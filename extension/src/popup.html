@@ -31,14 +31,27 @@
         </nav>
     </div>
     <div class="main-content container-fluid">
-        <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
+ 
+        <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in tabMaps track by $index">
             <div class="panel-body">
-                <div class="input-group proxly-name">
-                    <div class="btn-group">
-                        <flip-switch ng-model="item['isOn']" ng-click="toggleItem(item)" identifier="redir-{{$index}}"></flip-switch>
-                    </div>
-                    <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name">
+
+                <div class="input-group col-xs-12 proxly-name">
+                    <span type="text" id="projectName">{{item.name}}</span>
+                    <!-- <div class="btn-group"> -->
+                    <!--after-toggle="toggleItem(item)"-->
+                        <div style="float:right;"> <flip-switch style="display:block;" ng-model="item.isOn" knob-label="Redirect" after-toggle="toggleItem(item)" identifier="redir-{{$index}}"></flip-switch> 
+                          </div>
+                    <!-- </div> -->
+                    
                 </div>
+                <div class="col" ng-show="item.type == 'Web Server'">
+                    <span class="label label-default">Web Server URL</span>
+                    <input ng-disabled="true" ng-model="item.origin" type="text" class="form-control input-sm" />
+                </div>
+                <div class="proxly-folder" ng-show="item.type == 'Local Dir'">
+                    <code ng-if="item != null && item.dir != null && item.dir.pathName != null">{{item.dir.pathName}}</code>
+                    <button ng-if="item == null || item.directoryEntryId == null || item.directoryEntryId == ''" ng-click="openApp()" class="btn btn-info" ng-click="openDirectory(item)">Open App to select a directory</button>
+                </div>                
             </div>
         </div>
         <nav class="navbar navbar-toolbar navbar-default navbar-fixed-bottom resources-nav res-show" ng-show="showResources" role="navigation">
@@ -50,9 +63,10 @@
                         </a>
                     </li>
                     <li>
-                        <div class="btn-group" >
-                            <flip-switch ng-model="serverCheckbox" toggle-this="toggleServer()" identifier="server"></flip-switch>
-                        </div>
+                        <span>
+                            <flip-switch ng-model="server.status.isOn" knob-label="Server" after-toggle="toggleServer()" identifier="server"></flip-switch>
+                            <flip-switch ng-model="liveReload['active']" knob-label="LiveReload" after-toggle="toggleLiveReload(item)"></flip-switch>
+                        </span>
                     </li>
                 </ul>
             </div>

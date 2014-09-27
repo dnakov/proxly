@@ -29,13 +29,12 @@ class ProxlyCtrl extends @BaseCtrl
 
     @data = @app.Storage.data
 
-    @$scope.server = @app.Storage.session.server
-    # @$scope.data = @app.data
-    @$scope.maps = @data.maps 
-    @$scope.directories = @data.directories 
+    @$scope.server = @app.Server
+    @$scope.data = @data
+    @$scope.itemDirMap = new WeakMap()
+
     @$scope.save = @save
     @$scope.resourceMap = @resourceMap = []
-    @$scope.currentResources = @app.data.currentResources
     @$scope.currentResources ?= []
     # @$scope.getResources = @getResources
     @$scope.urlFilter = @urlFilter = 'resource'
@@ -59,7 +58,7 @@ class ProxlyCtrl extends @BaseCtrl
     # $document.on 'dragenter', @onDrop
 
     # @app.Storage.retrieveAll () =>
-    #   if @data.maps? then @setLocalPath item for item in @data.maps
+    #   if @$scope.maps? then @setLocalPath item for item in @$scope.maps
 
     @$scope.presets = [
       presetName:'Salesforce'
@@ -69,6 +68,14 @@ class ProxlyCtrl extends @BaseCtrl
 
     @$scope.navIsRedirect=false
     @$scope.showResources=false
+    @$scope.$watchCollection "data", (newValue, oldValue) =>
+      @$scope.maps = newValue.maps 
+      # @$scope.directories = newValue.directories 
+      @$scope.currentResources = newValue.currentResources
+
+      # for itm in @$scope.maps
+      #   for dir in @$scope.directories when dir.directoryEntryId = itm.directoryEntryId
+      #     @$scope.itemDirMap.set(itm, dir)
 
     # @checkIsExtensionInstalled()
 
@@ -81,20 +88,23 @@ class ProxlyCtrl extends @BaseCtrl
   #   chrome.webstore.install()
 
   onDrop: (event) =>
-    entry = event.items[0]?.webkitGetAsEntry?()
-    return unless entry?.isDirectory
-    @app.FS.openDirectory entry, (err, pathName, dir) =>
-      dir.name = pathName.match(/[^\/]+$/)?[0]
-      delete dir.entry
-      dir.pathName = pathName
-      dir.isOn = true
-      @data.directories.push dir
-      @$scope.$apply()
+    # entry = event.items[0]?.webkitGetAsEntry?()
+    # return unless entry?.isDirectory
+    # @app.FS.openDirectory entry, (err, pathName, dir) =>
+    #   dir.name = pathName.match(/[^\/]+$/)?[0]
+    #   delete dir.entry
+    #   dir.pathName = pathName
+    #   dir.isOn = true
+    #   @data.directories.push dir
+    #   @$scope.$apply()
 
   # save: (close) ->
   #   @app.Storage.saveAllAndSync()
   #   chrome.app.window.current().close() if close
   #     # @app.Storage.set resourceMap:@$scope.resourceMap
+
+  openApp: (item) ->
+    @app.openApp(item)
 
   refreshCurrentResources: () ->
     @app.getResources (err, currentResources) =>
@@ -114,23 +124,26 @@ class ProxlyCtrl extends @BaseCtrl
     newItem.type = 'Web Server'
     newItem.origin = 'http://localhost:9000/'
     newItem.url = newItem.regexRepl = '' 
-    @data.maps.push newItem
-    newItem.name = 'Redirect ' + @data.maps.length
+    @$scope.maps.push newItem
+    newItem.name = 'Redirect ' + @$scope.maps.length
+    newItem.dir = {}
+    newItem.directoryEntryId = ''
+
     # @openDirectory newItem, (pathName, dir) =>
     #   newItem.name = pathName.match(/[^\/]+$/)?[0]
     #   newItem.directory = pathName
     #   @setLocalPath newItem
-    #   @data.maps.push newItem      
+    #   @$scope.maps.push newItem      
     #   @$scope.currentFilter = item
     #   @$scope.$apply()
 
-  deleteDirectory: (item) ->
-    idx = @data.directories.indexOf item
-    @data.directories.splice(idx, 1) if idx >= 0
+  # deleteDirectory: (item) ->
+  #   idx = @data.directories.indexOf item
+  #   @data.directories.splice(idx, 1) if idx >= 0
 
   deleteMapping: (item) ->
-    idx = @data.maps.indexOf item
-    @data.maps.splice(idx, 1) if idx >= 0
+    idx = @$scope.maps.indexOf item
+    @$scope.maps.splice(idx, 1) if idx >= 0
     @currentFilter = {}
 
   setLocalPath: (item) ->
@@ -151,9 +164,9 @@ class ProxlyCtrl extends @BaseCtrl
           resource.origin = item.origin
           resource.localFile = 'N/A'
         else
-          _dirs = [] 
-          _dirs.push dir for dir in @$scope.directories when dir.isOn
-          @app.getFileMatch resource.localPath, (err, fileMatch, directory) => 
+          # _dirs = [] 
+          # _dirs.push dir for dir in @$scope.directories when dir.isOn
+          @app.getFileMatch item, resource.localPath, (err, fileMatch, directory) => 
             if err?             
               for res in @$scope.filteredResources when res is resource
                 res.localFile = ''
@@ -161,9 +174,16 @@ class ProxlyCtrl extends @BaseCtrl
               for res in @$scope.filteredResources when res.localPath is fileMatch.filePath
                 res.localFile = directory.pathName + '/' + res.localPath
             @$scope.$apply()
+  
+  # getDirectoryForItem: (item) ->
+  #   for dir in @data.directories when dir.directoryEntryId = item.directoryEntryId
+  #     return dir
 
 
-  openDirectory: (cb) ->
+  openDirectory: (item, cb) ->
+    existingDir = item.dir
+    # if existingDir? then @data.directories.splice @data.directories.indexOf(existingDir), 1
+
     # @app.FS.openDirectory (pathName, dir) =>
     chrome.fileSystem.chooseEntry type:'openDirectory', (directoryEntry, files) =>
       @app.FS.openDirectory directoryEntry, (err, pathName, dir) =>
@@ -172,7 +192,9 @@ class ProxlyCtrl extends @BaseCtrl
         dir.isOn = true    
         # can't save circular blah blah
         delete dir.entry
-        @data.directories.push dir
+        item.dir = dir
+        item.directoryEntryId = item.dir.directoryEntryId
+        @$scope.$apply()
         cb?(pathName,dir)
 
   setCurrentFilter: (item) ->
@@ -183,13 +205,18 @@ class ProxlyCtrl extends @BaseCtrl
     @sce.trustAsHtml text
 
   toggleServer: () ->
-    if @app.Storage.session.server.status.isOn
+
+    if @$scope.server.status.isOn is false
       @app.stopServer =>
         console.log 'stop'
+        # @$scope.$apply()
     else
-      @app.startServer =>
+      @app.startServer dirId, () =>
         # @$scope.$apply()
         console.log 'start'
+        # @$scope.$apply()
+
+
 
   getClass: (type, item) ->
     if type is 'on'
@@ -198,18 +225,18 @@ class ProxlyCtrl extends @BaseCtrl
       if item.isOn then 'btn-default' else 'btn-danger'
 
   newItem: () ->
-    if @$scope.navIsRedirect
+    # if @$scope.navIsRedirect
       @newMapping()
-    else
-      @newDirectory()
+    # else
+      # @newDirectory()
 
   toggleItem: (item) ->
     item.isOn = true unless item.isOn?
     item.isOn = !item.isOn
 
-  getFullDirList: (directories) ->
-    for own key, d of directories
-      @getOneDirList d
+  # getFullDirList: (directories) ->
+  #   for own key, d of directories
+  #     @getOneDirList d
 
   getDirList: (d) ->
     @lsR d.entry, (results) ->

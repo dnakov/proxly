@@ -137,8 +137,8 @@ border-color: #004C97;
   margin-right: 10px;
 }
 .proxly-folder code {
-  margin-top: auto;
-  margin-bottom: auto;
+  margin-top: 3px;
+  margin-bottom: 2px;
   vertical-align: middle;
 
 }
@@ -398,4 +398,9 @@ ng\:form {
 }
 p {
   margin: 0 0 10px;
+}
+.panel-body .proxly-row {
+  margin-top:10px;
+  margin-right:20px;
+
 }

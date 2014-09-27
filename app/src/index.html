@@ -17,7 +17,7 @@
   <div id="main-container">
     <div class="container-fluid">
         
-        <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default navbar-fixed-top proxly-nav-top" role="navigation">
+        <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default proxly-nav-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
@@ -42,19 +42,17 @@
 
                 </form> -->
 
-                <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav nav">
+                <!-- <div class="collapse navbar-collapse"> -->
+<!--                     <ul class="navbar-nav nav">
                         <li ng-click="navIsRedirect=false" class="{{navIsRedirect ? '' : 'active'}}"><a href="#">Server</a></li>
                         <li ng-click="navIsRedirect=true" class="{{navIsRedirect ? 'active' : ''}}"><a href="#">Redirect</a></li>
-                    </ul>
-                    <ul class="nav navbar-nav">
+                    </ul> -->
+                    <ul class="nav navbar-nav ">
                         <li>
-                            <button class="btn btn-success navbar-btn" type="button" id="" ng-click="newItem()">Add {{navIsRedirect ? 'Redirect' : 'Directory'}}
-                                </button>
-                          
+                            <button class="btn btn-success navbar-btn navbar-right" type="button" id="" ng-click="newItem()">New Item</button>
                         </li>
                     </ul>
-                </div>
+                <!-- </div> -->
 
             </div>
 
@@ -64,7 +62,7 @@
     </div>
     <div class="main-content container-fluid">
 
-        <div ng-show="navIsRedirect==false && (directories != null && directories.length > 0)" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
+ <!--        <div ng-show="navIsRedirect==false && (directories != null && directories.length > 0)" class="panel panel-info repeated-item" ng-repeat="item in directories track by $index">
                 <div class="panel-body">
                     <div class="input-group proxly-name">
                         <div class="col-xs-2">
@@ -75,7 +73,7 @@
                         </div>
                         <div class="col-xs-10">
                             <div class="col-xs-11">
-                                <input type="text" id="projectName" class="form-control proxly-input project-name" ng-model="item.name"></input>
+                                <input type="text" id="projectName" class="form-control  project-name" ng-model="item.name"></input>
                             </div>
                             <div class="col-xs-1">
                                 <span class="input-group-btn">
@@ -100,21 +98,21 @@
                         </div>
                     </div>
                 </div>
-        </div>
-        <div class="bs-callout bs-callout-danger" ng-show="navIsRedirect==false && (directories == null || directories.length == 0)">
+        </div> -->
+   <!--      <div class="bs-callout bs-callout-danger" ng-show="navIsRedirect==false && (directories == null || directories.length == 0)">
             <h4>No directories have been added</h4>
             <p>Click the button to add a directory in here.<br>
             Drag and Drop is experimental, it will probably eat your memory and crash</p>
-        </div>
-        <div ng-show="navIsRedirect" class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
+        </div> -->
+        <div class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
 
                 <div class="panel-body">
-                    <div class="input-group proxly-name">
+                    <div class="row proxly-row">
                         <div class="col-xs-2">
                             <div class="dropdown">
                                 <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{item.type}}<span class="caret"></span></button>
                                 <ul class="dropdown-menu" role="menu">
-                                    <li><a href="#" ng-click="item.type='Local File'">Local File</a></li>
+                                    <li><a href="#" ng-click="item.type='Local Dir'">Local Dir</a></li>
                                     <li><a href="#" ng-click="item.type='Web Server'">Web Server</a></li>
                                 </ul>
                                 <!-- <flip-switch ng-model="item.isOn" identifier="redir-{{$index}}"/> -->
@@ -122,26 +120,37 @@
                                 <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
                             </div>
                         </div>
-                        <div class="col-xs-10">
-                            <div class="col-xs-10">
-                                <input type="text" id="projectName" class="project-name proxly-input" ng-model="item.name"></input>
+
+                        <div class="col-xs-10" ng-show="item.type == 'Web Server'">
+                            <span class="label label-default">Web Server URL</span>
+                            <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.origin" type="text" placeholder="http://localhost:9000" class="form-control input-sm" />
+                        </div>
+                        <div class="col-xs-9 proxly-folder" ng-show="item.type == 'Local Dir'">
+                            <code ng-if="item != null && item.dir != null && item.dir.pathName != null">{{item.dir.pathName}}</code>
+                            <code ng-if="item.dir == null || item.dir.pathName == null">Hit Browse to select a directory</code>
+                        </div>
+                        <div class="col-xs-1" ng-show="item.type == 'Local Dir'">
+                            <button class="btn btn-info" ng-click="openDirectory(item)">Browse</button>
+                        </div>
+
+                    </div>
+                    <div class="row proxly-row">
+                        <!-- <div class="col-xs-10"> -->
+                            <div class="col-xs-11">
+                                <input type="text" id="projectName" class="project-name form-control" ng-model="item.name"></input>
                             </div>
                             <div class="col-xs-1">
                                 <span class="input-group-btn">
-                                    <button class="btn btn-danger" ng-click="deleteMapping(item)">Delete</button>
+                                    <button class="btn btn-danger" ng-click="deleteMapping(item)">&nbsp;Delete&nbsp;</button>
                                 </span>
                             </div>
-                        </div>
+                        <!-- </div> -->
                     </div>
 
-                <div ng-show="item.isRedirect == true">
-                    <div class="row" ng-show="item.type == 'Web Server'">
-                        <div class="col-xs-12">
-                            <span class="label label-default">Origin</span>
-                            <input ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.origin" type="text" class="form-control input-sm" />
-                        </div>
-                    </div>
-                    <div class="row">
+
+                    
+                
+                    <div class="row proxly-row">
                         <div class="col-xs-6">
                             <span class="label label-default">Match</span>
                             <input list="regex-url" ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" />
@@ -201,7 +210,7 @@
                         <li><input ng-disabled="server.status.isOn" identifier="server" type="number" ng-model="server.status.port" class="form-control input-xs proxly-port" placeholder="31337" min="1025" max="65534"></li>
                         <li>
                             <div class="btn-group" >
-                            <flip-switch ng-model="serverCheckbox" toggle-this="toggleServer()" identifier="server"/>
+                                <flip-switch ng-model="server.status.isOn" knob-label="Server" identifier="server"/>
                             </div>
                         </li>
                         <li>

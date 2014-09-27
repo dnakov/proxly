@@ -4,6 +4,7 @@ class Redirect
   prefix:null
   currentMatches:{}
   currentTabId: null
+  corsMap: {}
   # http://stackoverflow.com/a/27755
   # url: RegExp['$&'],
   # protocol:RegExp.$2,
@@ -73,7 +74,7 @@ class Redirect
       chrome.webRequest.onBeforeRequest.removeListener @data[@currentTabId].listener
 
     @data[@currentTabId].listener = @createRedirectListener()
-    # @data[@currentTabId].onBeforeSendHeadersListener = @createOnBeforeSendHeadersListener()
+    @data[@currentTabId].onBeforeSendHeadersListener = @createOnBeforeSendHeadersListener()
     @data[@currentTabId].onHeadersReceivedListener = @createOnHeadersReceivedListener()
     # @data[@currentTabId].isOn = true
     @_start @currentTabId
@@ -83,7 +84,7 @@ class Redirect
 
   _stop: (tabId) ->
     chrome.webRequest.onBeforeRequest.removeListener @data[tabId].listener
-    # chrome.webRequest.onBeforeSendHeaders.removeListener @data[tabId].onBeforeSendHeadersListener
+    chrome.webRequest.onBeforeSendHeaders.removeListener @data[tabId].onBeforeSendHeadersListener
     chrome.webRequest.onHeadersReceived.removeListener @data[tabId].onHeadersReceivedListener
     
   _start: (tabId) ->
@@ -91,10 +92,10 @@ class Redirect
       urls:['<all_urls>']
       tabId:tabId,
       ['blocking']
-    # chrome.webRequest.onBeforeSendHeaders.addListener @data[tabId].onBeforeSendHeadersListener,
-    #   urls:['<all_urls>']
-    #   tabId:tabId,
-    #   ["requestHeaders"]
+    chrome.webRequest.onBeforeSendHeaders.addListener @data[tabId].onBeforeSendHeadersListener,
+      urls:['<all_urls>']
+      tabId:tabId,
+      ['blocking',"requestHeaders"]
     chrome.webRequest.onHeadersReceived.addListener @data[tabId].onHeadersReceivedListener,
       urls:['<all_urls>']
       tabId:tabId,
@@ -130,31 +131,38 @@ class Redirect
   # shouldAllowCORS: (details) ->
 
 
-  # createOnBeforeSendHeadersListener: () ->
-  #   (details) =>
-  #     if details.url.indexOf(@prefix) is 0
-  #       flag = false
-  #       rule =
-  #         name: "Origin"
-  #         value: "http://proxly.com"
-  #       for header in details.requestHeaders
-  #         if header.name is rule.name
-  #           flag = true
-  #           header.value = rule.value
-  #           break
+  createOnBeforeSendHeadersListener: () ->
+    (details) =>
+      if details.url.indexOf(@prefix) is 0
+        flag = false
+        rule =
+          name: "Origin"
+          value: new URL(details.url).origin
+        for header in details.requestHeaders
+          if header.name is rule.name
+            flag = true
+            @corsMap[details.url] = header.value
+            header.value = rule.value
+            break
 
-  #       details.requestHeaders.push rule if not flag
+        details.requestHeaders.push rule if not flag
 
-  #     return requestHeaders:details.requestHeaders
+      return requestHeaders:details.requestHeaders
 
   createOnHeadersReceivedListener: () ->
     (details) =>
-      if details.url.indexOf(@prefix) is 0
-        rule =
-          name: "Access-Control-Allow-Origin"
-          value: "*"
+      # if details.url.indexOf(@prefix) is 0
+      rule =
+        name: "Access-Control-Allow-Origin"
+        value: @corsMap[details.url] or "*"
 
-        details.responseHeaders.push rule
+      details.responseHeaders.push rule
+
+      rule =
+        name: "Access-Control-Allow-Credentials"
+        value: "true"
+
+      details.responseHeaders.push rule
 
       return responseHeaders:details.responseHeaders
 

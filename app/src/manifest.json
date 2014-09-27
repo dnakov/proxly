@@ -11,6 +11,19 @@
       "scripts": ["scripts/background.bundle.js"]
     }
   },
+  
+  "sockets": {
+     "udp": {
+       "send": [""],
+       "bind": [""]
+     },
+     "tcp": {
+       "connect": [""]
+     },
+     "tcpServer": {
+       "listen": ["127.0.0.1:*"]
+     }
+  },
   "permissions": [
   {"socket":[
             "tcp-connect",

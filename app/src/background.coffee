@@ -29,14 +29,19 @@ Config = require '../../config.coffee'
 Storage = require '../../storage.coffee'
 FileSystem = require '../../filesystem.coffee'
 Server = require '../../server.coffee'
-
+# FileWatcher = require '../../filewatcher.coffee'
+LiveReloadClient = require '../../livereloadclient.coffee'
 
 root.app = new Application 
   Storage: new Storage
   FS: new FileSystem
   Server: new Server
+  LiveReloadClient: LiveReloadClient
+
+  # FileWatcher: new FileWatcher
 
 root.app.Server.getLocalFile = app.getLocalFile
+# root.app.FileWatcher.getLocalFile = app.getLocalFile
 # root.app.Storage.data.server = status:root.app.Server.status
 
 chrome.runtime.onSuspend.addListener ->
