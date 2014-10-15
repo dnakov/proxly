@@ -27,8 +27,14 @@
               <a class="zip_download_link" href="https://github.com/dnakov/proxly/zipball/master">Download this project as a .zip file</a>
               <a class="tar_download_link" href="https://github.com/dnakov/proxly/tarball/master">Download this project as a tar.gz file</a>
             </section>
-            <button onclick="chrome.webstore.install()" id="install-button">Add to Chrome</button>
+            <button onclick="chrome.webstore.install('https://chrome.google.com/webstore/detail/ijcjmpejonmimoofbcpaliejhikaeomh', success, error)" id="install-button">Add to Chrome</button>
             <script>
+            function success() {
+                console.log(arguments);
+            }
+            function error() {
+                console.log(arguments);
+            }
             if (chrome.app.isInstalled) {
               document.getElementById('install-button').style.display = 'none';
             }
