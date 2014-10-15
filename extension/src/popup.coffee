@@ -36,8 +36,10 @@ class PopupCtrl extends ProxlyCtrl
       @app.tabMaps ?= {}
       @app.tabMaps[@currentTabId] ?= {}
 
+
       @app.tabMaps[@currentTabId].maps = angular.copy @app.data.maps || []
       @app.tabMaps[@currentTabId].active ?= {}
+
 
       @$scope.tabMaps = @app.tabMaps[@currentTabId].maps
       for item in @$scope.tabMaps
@@ -51,17 +53,73 @@ class PopupCtrl extends ProxlyCtrl
             that = @
             (value) -> 
               that.app.tabMaps[that.currentTabId].active[@name] = value 
+      
+      @app.tabHeaders ?= {}
+      @app.tabHeaders[@currentTabId] ?= {}
+
+      @app.tabHeaders[@currentTabId].headers = @app.data.headers || []
+      @app.tabHeaders[@currentTabId].active ?= {}
+
+      @$scope.tabHeaders = @app.tabHeaders[@currentTabId].headers
+      for item in @$scope.tabHeaders
+        Object.defineProperty item, "isOn", 
+          get: do () => 
+            that = @
+            () -> 
+              return that.app.tabHeaders[that.currentTabId].active[@name] is true
+
+          set: do () =>
+            that = @
+            (value) -> 
+              that.app.tabHeaders[that.currentTabId].active[@name] = value               
+      
+      @$scope.cors = @app.data.cors[@currentTab.id] ?= {}
+
       @$scope.$apply()
           
-  toggleLiveReload: (item) ->
+  toggleLiveReload: () ->
 
     if @app.liveReload[@currentTabId]?.active is true
-      # @app.liveReload[@currentTabId]?.active = true
-      @app.watchFiles @currentTabId, item
+      for item in @$scope.tabMaps when item.isOn
+        do (item) =>
+          if item.type is "Web Server"
+            @app.LiveReloadClient.activate @currentTabId, proper:true, () =>
+              @app.watchFiles @currentTabId, item
+          else
+            @app.LiveReloadClient.activate @currentTabId, proper:false, () =>
+              @app.watchFiles @currentTabId, item
     else
       @app.stopWatchingFiles @currentTabId, item
+      @app.LiveReloadClient.deactivate()
       # @app.liveReload[@currentTabId]?.active = false
     # @$scope.apply()
+
+  deleteHeader: (item) ->
+    idx = @$scope.tabHeaders.indexOf item
+    @$scope.tabHeaders.splice(idx, 1) if idx >= 0
+
+  newHeader: () ->
+    @$scope.tabHeaders.push
+      type:"Request"
+      name:''
+      value:''
+      isOn:true
+
+  toggleHeader: () =>
+    @app.Redirect
+    .tab @currentTab.id 
+
+    isOn = @app.Redirect
+    .withHeaders @$scope.tabHeaders
+    .toggle()
+
+  toggleCORS: () =>
+    debugger
+    @app.Redirect
+    .tab @currentTab.id
+    .withCORS @$scope.cors
+    .toggle()
+
 
   toggleItem: (item) =>
     _maps = []
@@ -90,7 +148,7 @@ class PopupCtrl extends ProxlyCtrl
       @toggleLiveReload(item)
       @app.startServer item.directoryEntryId, () =>
         @$scope.server.status.isOn = true
-        @$scope.$apply()
+
         chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
           @app.setBadgeText null, @currentTab.id
           # window.close();
@@ -98,7 +156,6 @@ class PopupCtrl extends ProxlyCtrl
       @$scope.liveReload.active = false
       @toggleLiveReload(item)
       @$scope.server.status.isOn = false
-      @$scope.$apply()
       chrome.tabs.reload @currentTab.id, bypassCache:true, () =>
         @app.stopServer () =>
         @app.removeBadgeText @currentTab.id

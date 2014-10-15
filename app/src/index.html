@@ -20,12 +20,7 @@
         <nav class="navbar navbar-fixed-top navbar-toolbar navbar-default proxly-nav-top" role="navigation">
             <div class="container-fluid">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
+                     
                     <a style="" href="#" class="navbar-brand proxly-image">
                         <span class="proxly-name">Proxly</span>
                     </a>
@@ -48,6 +43,8 @@
                         <li ng-click="navIsRedirect=true" class="{{navIsRedirect ? 'active' : ''}}"><a href="#">Redirect</a></li>
                     </ul> -->
                     <ul class="nav navbar-nav ">
+                        <li ng-click="navIsHeaders=false" class="{{navIsHeaders ? '' : 'active'}}"><a href="#">Redirect</a></li>
+                        <li ng-click="navIsHeaders=true" class="{{navIsHeaders ? 'active' : ''}}"><a href="#">Headers</a></li>
                         <li>
                             <button class="btn btn-success navbar-btn navbar-right" type="button" id="" ng-click="newItem()">New Item</button>
                         </li>
@@ -104,7 +101,7 @@
             <p>Click the button to add a directory in here.<br>
             Drag and Drop is experimental, it will probably eat your memory and crash</p>
         </div> -->
-        <div class="panel panel-info repeated-item" ng-repeat="item in maps track by $index">
+        <div class="panel panel-info repeated-item" ng-repeat="item in maps track by $index" ng-show="navIsHeaders==false">
 
                 <div class="panel-body">
                     <div class="row proxly-row">
@@ -166,7 +163,58 @@
               
                 </div>    
         </div>
-       
+        <div class="panel panel-info headers" ng-show="navIsHeaders">
+            <div class="panel-body">
+            <h4>
+                <flip-switch ng-model="rule.cors" knob-label="CORS" identifier="server"/>
+            </h4>
+
+            <!-- <div class="row"> -->
+      <!--           <div class="col-xs-6">
+                    <span class="label label-default">Matching Request URL</span>
+                    <input list="regex-url" ng-focus="$parent.showResources=true && setCurrentFilter(item)" ng-blur="$parent.showResources=false" ng-change="setLocalPath(item)" ng-model="item.url" type="text" class="form-control input-sm" >
+
+                </div>
+                <div class="col-xs-6">
+                    <span class="label label-default">Matching Header<input type="checkbox"></span>
+                        <input type="text" class="form-control input-sm" >
+                </div>
+                <div class="col-xs-1">
+                <div class="">&nbsp;</div>
+                    <button class="btn btn-success" ng-click="newMapping($parent.rule, item)"><span class="glyphicon glyphicon-plus"></span></button>
+                </div> -->
+                <div class="row">
+                    <div class="col-xs-2"></div>
+                    <div class="col-xs-4">
+                        <span class="label label-default">Key</span>
+                    </div>
+                    <div class="col-xs-5">
+                        <span class="label label-default">Value</span>
+                    </div>
+                </div>                            
+                <div class="row" ng-repeat="item in headers track by $index">
+                    <div class="col-xs-2 dropdown">
+                        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{item.type}}<span class="caret"></span></button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="#" ng-click="item.type='Request'">Request</a></li>
+                            <li><a href="#" ng-click="item.type='Response'">Response</a></li>
+                        </ul>
+                        <!-- <flip-switch ng-model="item.isOn" identifier="redir-{{$index}}"/> -->
+                        <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('on', item)">On</button> -->
+                        <!-- <button ng-click="toggleItem(item)" type="button" class="btn" ng-class="getClass('off', item)">Off</button> -->
+                        
+                    </div>
+
+                    <div class="col-xs-4">
+                        <input type="text" ng-model="item.name" class="form-control input-sm" >
+                    </div>
+                    <div class="col-xs-5">
+                        <input type="text" ng-model="item.value" class="form-control input-sm" >
+                    </div>   
+                      <button class="btn btn-danger btn-sm" ng-click="deleteHeader(item)"><span class="glyphicon glyphicon-minus"></span></button>                                          
+                </div>
+                </div>
+            </div>       
 <!--         <div ng-show="!navIsRedirect || !extInfo.enabled" class="bs-callout bs-callout-danger">
             <h4>Chrome extension not installed/enabled</h4>
             <p>Get it here <a href="" ng-click="installExtension()"></a></p>

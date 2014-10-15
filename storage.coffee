@@ -14,6 +14,8 @@ class Storage
     currentResources: []
     directories:[]
     maps:[]
+    cors:{}
+    headers:[]
     tabMaps:{}
     currentFileMatches:{}
   

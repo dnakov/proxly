@@ -67,9 +67,11 @@ class ProxlyCtrl extends @BaseCtrl
       ]
 
     @$scope.navIsRedirect=false
+    @$scope.navIsHeaders=false
     @$scope.showResources=false
     @$scope.$watchCollection "data", (newValue, oldValue) =>
       @$scope.maps = newValue.maps 
+      @$scope.headers = newValue.headers
       # @$scope.directories = newValue.directories 
       @$scope.currentResources = newValue.currentResources
 
@@ -116,6 +118,14 @@ class ProxlyCtrl extends @BaseCtrl
   newDirectory: () ->
     @openDirectory (err, pathName, dir) =>
       @$scope.$apply()
+  
+  newHeader: () ->
+    @$scope.headers.push
+      type:"Request"
+      name:''
+      value:''
+      isOn:false
+
 
   newMapping: (item) ->
     newItem = if item? then angular.copy(item) else {}
@@ -140,6 +150,10 @@ class ProxlyCtrl extends @BaseCtrl
   # deleteDirectory: (item) ->
   #   idx = @data.directories.indexOf item
   #   @data.directories.splice(idx, 1) if idx >= 0
+
+  deleteHeader: (item) ->
+    idx = @$scope.headers.indexOf item
+    @$scope.headers.splice(idx, 1) if idx >= 0
 
   deleteMapping: (item) ->
     idx = @$scope.maps.indexOf item
@@ -225,10 +239,10 @@ class ProxlyCtrl extends @BaseCtrl
       if item.isOn then 'btn-default' else 'btn-danger'
 
   newItem: () ->
-    # if @$scope.navIsRedirect
+    unless @$scope.navIsHeaders
       @newMapping()
-    # else
-      # @newDirectory()
+    else
+      @newHeader()
 
   toggleItem: (item) ->
     item.isOn = true unless item.isOn?

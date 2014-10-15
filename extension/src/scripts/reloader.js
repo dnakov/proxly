@@ -247,7 +247,7 @@
     };
 
     Reloader.prototype.reloadStylesheet = function(path) {
-      var imported, link, links, match, style, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1;
+      var html, imported, link, links, match, style, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3;
       links = (function() {
         var _i, _len, _ref, _results;
         _ref = this.document.getElementsByTagName('link');
@@ -260,22 +260,33 @@
         }
         return _results;
       }).call(this);
-      imported = [];
-      _ref = this.document.getElementsByTagName('style');
+      _ref = this.document.querySelectorAll('link[rel="import"]');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        style = _ref[_i];
+        html = _ref[_i];
+        _ref1 = html["import"].querySelectorAll('link[rel="stylesheet"]');
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          link = _ref1[_j];
+          if (!link.__LiveReload_pendingRemoval) {
+            links.push(link);
+          }
+        }
+      }
+      imported = [];
+      _ref2 = this.document.getElementsByTagName('style');
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        style = _ref2[_k];
         if (style.sheet) {
           this.collectImportedStylesheets(style, style.sheet, imported);
         }
       }
-      for (_j = 0, _len1 = links.length; _j < _len1; _j++) {
-        link = links[_j];
+      for (_l = 0, _len3 = links.length; _l < _len3; _l++) {
+        link = links[_l];
         this.collectImportedStylesheets(link, link.sheet, imported);
       }
       if (this.window.StyleFix && this.document.querySelectorAll) {
-        _ref1 = this.document.querySelectorAll('style[data-href]');
-        for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
-          style = _ref1[_k];
+        _ref3 = this.document.querySelectorAll('style[data-href]');
+        for (_m = 0, _len4 = _ref3.length; _m < _len4; _m++) {
+          style = _ref3[_m];
           links.push(style);
         }
       }
@@ -291,8 +302,8 @@
           this.reattachStylesheetLink(match.object);
         }
       } else {
-        for (_l = 0, _len3 = links.length; _l < _len3; _l++) {
-          link = links[_l];
+        for (_n = 0, _len5 = links.length; _n < _len5; _n++) {
+          link = links[_n];
           this.reattachStylesheetLink(link);
         }
       }
@@ -448,8 +459,30 @@
       return 'livereload=' + Date.now();
     };
 
-    Reloader.prototype.generateCacheBustUrl = function(url) {
-      return url;
+    Reloader.prototype.generateCacheBustUrl = function(url, expando) {
+      var hash, oldParams, originalUrl, params, _ref;
+      if (expando == null) {
+        expando = this.generateUniqueString();
+      }
+      _ref = splitUrl(url), url = _ref.url, hash = _ref.hash, oldParams = _ref.params;
+      if (this.options.overrideURL) {
+        if (url.indexOf(this.options.serverURL) < 0) {
+          originalUrl = url;
+          url = this.options.serverURL + this.options.overrideURL + "?url=" + encodeURIComponent(url);
+          this.console.log("LiveReload is overriding source URL " + originalUrl + " with " + url);
+        }
+      }
+      params = oldParams.replace(/(\?|&)livereload=(\d+)/, function(match, sep) {
+        return "" + sep + expando;
+      });
+      if (params === oldParams) {
+        if (oldParams.length === 0) {
+          params = "?" + expando;
+        } else {
+          params = "" + oldParams + "&" + expando;
+        }
+      }
+      return url + params + hash;
     };
 
     return Reloader;

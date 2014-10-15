@@ -175,6 +175,9 @@ class Reloader
   reloadStylesheet: (path) ->
     # has to be a real array, because DOMNodeList will be modified
     links = (link for link in @document.getElementsByTagName('link') when link.rel is 'stylesheet' and not link.__LiveReload_pendingRemoval)
+    for html in @document.querySelectorAll('link[rel="import"]')
+      for link in html.import.querySelectorAll('link[rel="stylesheet"]') when not link.__LiveReload_pendingRemoval
+        links.push link
 
     # find all imported stylesheets
     imported = []
@@ -341,26 +344,24 @@ class Reloader
   generateUniqueString: ->
     'livereload=' + Date.now()
 
-  generateCacheBustUrl: (url) ->
-    url
-    
-  # generateCacheBustUrl: (url, expando=@generateUniqueString()) ->
-  #   { url, hash, params: oldParams } = splitUrl(url)
 
-  #   if @options.overrideURL
-  #     if url.indexOf(@options.serverURL) < 0
-  #       originalUrl = url
-  #       url = @options.serverURL + @options.overrideURL + "?url=" + encodeURIComponent(url)
-  
+  generateCacheBustUrl: (url, expando=@generateUniqueString()) ->
+    { url, hash, params: oldParams } = splitUrl(url)
 
-  #   params = oldParams.replace /(\?|&)livereload=(\d+)/, (match, sep) -> "#{sep}#{expando}"
-  #   if params == oldParams
-  #     if oldParams.length == 0
-  #       params = "?#{expando}"
-  #     else
-  #       params = "#{oldParams}&#{expando}"
+    if @options.overrideURL
+      if url.indexOf(@options.serverURL) < 0
+        originalUrl = url
+        url = @options.serverURL + @options.overrideURL + "?url=" + encodeURIComponent(url)
+        @console.log "LiveReload is overriding source URL #{originalUrl} with #{url}"
 
-  #   return url + params + hash
+    params = oldParams.replace /(\?|&)livereload=(\d+)/, (match, sep) -> "#{sep}#{expando}"
+    if params == oldParams
+      if oldParams.length == 0
+        params = "?#{expando}"
+      else
+        params = "#{oldParams}&#{expando}"
+
+    return url + params + hash
 
 
 window.LiveReload_ = window.LiveReload_ or (new Reloader(window,console, Timer))

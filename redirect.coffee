@@ -48,8 +48,13 @@ class Redirect
     @data[tabId] ?= isOn:false
     this
 
-  withPrefix: (prefix) =>
+  withPrefix: (prefix) ->
     @prefix = prefix
+    this
+
+
+  withCORS: (cors) ->
+    @data[@currentTabId].cors = cors
     this
 
   # withDirectories: (directories) ->
@@ -59,7 +64,17 @@ class Redirect
   #   else #if Object.keys(@data[@currentTabId]).length is 0
   #     @data[@currentTabId].directories = directories
   #     @start()
-  #   this    
+  #   this  
+
+  withHeaders: (headers) ->
+    if Object.getOwnPropertyNames(headers).length is 0
+      @data[@currentTabId].headers = []
+      @_stopHeaders @currentTabId
+    else #if Object.keys(@data[@currentTabId]).length is 0
+      @data[@currentTabId].headers = headers
+    this
+
+
 
   withMaps: (maps) ->
     if Object.getOwnPropertyNames(maps).length is 0
@@ -82,16 +97,22 @@ class Redirect
   killAll: () ->
     @_stop tabId for tabId of @data
 
+  _stopHeaders: (tabId) ->
+
+
   _stop: (tabId) ->
     chrome.webRequest.onBeforeRequest.removeListener @data[tabId].listener
     chrome.webRequest.onBeforeSendHeaders.removeListener @data[tabId].onBeforeSendHeadersListener
     chrome.webRequest.onHeadersReceived.removeListener @data[tabId].onHeadersReceivedListener
+    chrome.webRequest.handlerBehaviorChanged()
     
   _start: (tabId) ->
-    chrome.webRequest.onBeforeRequest.addListener @data[tabId].listener,
-      urls:['<all_urls>']
-      tabId:tabId,
-      ['blocking']
+    if @data[@currentTabId].maps?.length > 0
+      chrome.webRequest.onBeforeRequest.addListener @data[tabId].listener,
+        urls:['<all_urls>']
+        tabId:tabId,
+        ['blocking']
+
     chrome.webRequest.onBeforeSendHeaders.addListener @data[tabId].onBeforeSendHeadersListener,
       urls:['<all_urls>']
       tabId:tabId,
@@ -120,20 +141,29 @@ class Redirect
         else
           isOn = false
       # @data[@currentTabId].isOn = !@data[@currentTabId].isOn
-      
-      if isOn
-        @start()
-      else
-        @_stop(@currentTabId)
+    if @data[@currentTabId]?.headers?
+      for m in @data[@currentTabId]?.headers
+        if m.isOn
+          isOn = true
+          break
+        else
+          isOn = false  
 
-      return isOn
+    isOn = true if @data[@currentTabId].cors?.isOn is true
+
+    if isOn
+      @start()
+    else
+      @_stop(@currentTabId)
+
+    return isOn
 
   # shouldAllowCORS: (details) ->
 
 
   createOnBeforeSendHeadersListener: () ->
     (details) =>
-      if details.url.indexOf(@prefix) is 0
+      if details.url.indexOf(@prefix) is 0 or @data[@currentTabId].cors?.isOn is true
         flag = false
         rule =
           name: "Origin"
@@ -146,23 +176,36 @@ class Redirect
             break
 
         details.requestHeaders.push rule if not flag
+        
+      for header in @data[@currentTabId].headers when header.isOn and header.type is "Request"
+        hdr =
+          name:header.name
+          value:header.value
+        details.requestHeaders.push hdr
 
       return requestHeaders:details.requestHeaders
 
   createOnHeadersReceivedListener: () ->
     (details) =>
+      if @corsMap[details.url]? or @data[@currentTabId].cors?.isOn is true
       # if details.url.indexOf(@prefix) is 0
-      rule =
-        name: "Access-Control-Allow-Origin"
-        value: @corsMap[details.url] or "*"
+        rule =
+          name: "Access-Control-Allow-Origin"
+          value: @corsMap[details.url] or "*"
 
-      details.responseHeaders.push rule
+        details.responseHeaders.push rule
 
-      rule =
-        name: "Access-Control-Allow-Credentials"
-        value: "true"
+        rule =
+          name: "Access-Control-Allow-Credentials"
+          value: "true"
 
-      details.responseHeaders.push rule
+        details.responseHeaders.push rule
+
+      for header in @data[@currentTabId].headers when header.isOn and header.type is "Response"
+        hdr =
+          name:header.name
+          value:header.value
+        details.requestHeaders.push hdr
 
       return responseHeaders:details.responseHeaders
 

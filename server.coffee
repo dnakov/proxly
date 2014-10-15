@@ -40,6 +40,7 @@ class Server
 
       @status.isOn = false
       chrome.fileSystem.restoreEntry dirId, (entry) =>
+        console.log(entry)
         @webServer = new WebServer.Server {handlers:[[".*", WebServer.DirHandler(new WebServer.FileSystem(entry))]], port:@status.port}
         @webServer.start (er,socketId) =>
           if er? then cb?(er)
