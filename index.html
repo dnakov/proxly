@@ -9,6 +9,8 @@
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
     <title>Proxly</title>
+    <link rel="chrome-webstore-item"
+    href="https://chrome.google.com/webstore/detail/proxly-extension/ijcjmpejonmimoofbcpaliejhikaeomh">
   </head>
 
   <body>
@@ -25,6 +27,12 @@
               <a class="zip_download_link" href="https://github.com/dnakov/proxly/zipball/master">Download this project as a .zip file</a>
               <a class="tar_download_link" href="https://github.com/dnakov/proxly/tarball/master">Download this project as a tar.gz file</a>
             </section>
+            <button onclick="chrome.webstore.install()" id="install-button">Add to Chrome</button>
+            <script>
+            if (chrome.app.isInstalled) {
+              document.getElementById('install-button').style.display = 'none';
+            }
+            </script>
         </header>
     </div>
 
@@ -73,7 +81,7 @@ $ git checkout gh-pages
       </footer>
     </div>
 
-    
+
 
   </body>
 </html>
