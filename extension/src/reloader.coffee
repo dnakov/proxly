@@ -113,6 +113,9 @@ class Reloader
     if path.match(/\.[^\.]*(jpe?g|png|gif)/i)?[1]? 
       @reloadImages(path)
       return
+    if path.match(/\.([^\.]*less)/i)?[1]?
+      @insertLessRefreshScript(@window.document)
+      return
 
     @reloadPage()
 
@@ -362,6 +365,19 @@ class Reloader
         params = "#{oldParams}&#{expando}"
 
     return url + params + hash
+
+
+  insertLessRefreshScript: (document) ->
+    elScript = document.createElement('script')
+    scriptId = Math.random().toString(36).substring(2)
+    elScript.id = scriptId
+    elScript.type = 'text/javascript'
+    elScript.textContent = """
+        if (window.less)
+          less.refresh();
+        document.body.removeChild(document.getElementById('#{scriptId}'));
+    """
+    document.body.appendChild(elScript)
 
 
 window.LiveReload_ = window.LiveReload_ or (new Reloader(window,console, Timer))
