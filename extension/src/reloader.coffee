@@ -380,14 +380,12 @@ class Reloader
     document.body.appendChild(elScript)
 
 
-window.LiveReload_ = window.LiveReload_ or (new Reloader(window,console, Timer))
+unless window.LiveReload_
+  window.LiveReload_ = (new Reloader(window,console, Timer))
 
-chrome.runtime.onMessage.addListener (msg, sender, sendResponse) =>
-  if msg.action is "reload"
-    window.LiveReload_.reload msg.path
-  # else if msg.action is "shutdown"
-  #   LiveReload_.reloadPage()
-  # else if msg.action is ""
-
-
-
+  chrome.runtime.onMessage.addListener (msg, sender, sendResponse) =>
+    if msg.action is "reload"
+      window.LiveReload_.reload msg.path
+    # else if msg.action is "shutdown"
+    #   LiveReload_.reloadPage()
+    # else if msg.action is ""
