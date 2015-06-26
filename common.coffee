@@ -187,7 +187,7 @@ class Application extends Config
       for key, value of @watchedFiles when value.entry.isDirectory is false
         do (key,value) =>
           value.entry.getMetadata (meta) =>
-            if value.lastModified?.getTime() < meta.modificationTime.getTime()
+            if value.lastModified?.getTime() isnt meta.modificationTime.getTime()
               @LiveReloadClient.reload(key)
               show value
             value.lastModified = meta.modificationTime
