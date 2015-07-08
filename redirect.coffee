@@ -177,11 +177,12 @@ class Redirect
 
         details.requestHeaders.push rule if not flag
         
-      for header in @data[@currentTabId].headers when header.isOn and header.type is "Request"
-        hdr =
-          name:header.name
-          value:header.value
-        details.requestHeaders.push hdr
+      if @data[@currentTabId].headers
+        for header in @data[@currentTabId].headers when header.isOn and header.type is "Request"
+          hdr =
+            name:header.name
+            value:header.value
+          details.requestHeaders.push hdr
 
       return requestHeaders:details.requestHeaders
 
@@ -201,11 +202,12 @@ class Redirect
 
         details.responseHeaders.push rule
 
-      for header in @data[@currentTabId].headers when header.isOn and header.type is "Response"
-        hdr =
-          name:header.name
-          value:header.value
-        details.requestHeaders.push hdr
+      if @data[@currentTabId].headers
+        for header in @data[@currentTabId].headers when header.isOn and header.type is "Response"
+          hdr =
+            name:header.name
+            value:header.value
+          details.responseHeaders.push hdr
 
       return responseHeaders:details.responseHeaders
 
